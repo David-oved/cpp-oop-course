@@ -1,0 +1,18 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+# עורכים
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# מערכת
+.DS_Store
+Thumbs.db
+
+# סודות — מפתחות Firebase אמיתיים לעולם לא נכנסים לריפו
+.env
+.env.local
+.env.*.local
