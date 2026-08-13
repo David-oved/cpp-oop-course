@@ -24,6 +24,8 @@ import {
   IChevRight, IChevLeft, IHome, ITerminal, IReset, IWifiOff,
 } from './components/Icons';
 import { onUpdateAvailable, onOnlineChange, applyUpdate, checkVersion, isOnline } from './lib/pwa';
+import { consumeRedirectResult } from './lib/firebase';
+import AuthButton from './components/AuthButton';
 
 const BLANK_MAIN = `#include <iostream>
 using namespace std;
@@ -80,6 +82,11 @@ export default function App() {
       offOnline();
       document.removeEventListener('visibilitychange', onVisible);
     };
+  }, []);
+
+  useEffect(() => {
+    // תופס משתמש שחזר זה עתה מהתחברות Google ב-redirect (מצב PWA מותקן)
+    void consumeRedirectResult();
   }, []);
 
   const doUpdate = useCallback(async () => {
@@ -242,6 +249,7 @@ export default function App() {
             >
               {theme === 'dark' ? <ISun size={18} /> : <IMoon size={18} />}
             </button>
+            <AuthButton />
             <button className="icon-btn" onClick={() => setSettingsOpen(true)} title="הגדרות">
               <ISettings size={18} />
             </button>
