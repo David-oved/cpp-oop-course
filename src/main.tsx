@@ -6,6 +6,10 @@ import App from './App';
 import { LESSONS } from './content';
 import { wrapProject, wrapSnippet } from './lib/wrap';
 import { runProject } from './lib/compile';
+import { initPwa } from './lib/pwa';
+
+// נרשם רק ב-build אמיתי — ב-vite dev אין service worker (devOptions.enabled: false)
+if (import.meta.env.PROD) initPwa();
 
 // כלי בדיקה לפיתוח בלבד: מאפשר לקמפל את כל בלוקי הקוד של השיעור מהקונסולה
 if (import.meta.env.DEV) {

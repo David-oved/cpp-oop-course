@@ -6,6 +6,7 @@ const K_PROVIDER = 'cppcourse.provider';
 const K_KEYS = 'cppcourse.keys';
 const K_MODELS = 'cppcourse.models';
 const K_PROJECTS = 'cppcourse.projects';
+const K_APP_VERSION = 'cppcourse.appVersion';
 const K_DONE = 'cppcourse.completed';
 const K_QUIZ = 'cppcourse.quiz';
 const K_SCRATCH = 'cppcourse.scratch';
@@ -57,6 +58,10 @@ export function setModelFor(p: ProviderId, v: string) {
 
 /** האם יש בכלל מפתח כלשהו מוגדר */
 export const hasAnyKey = () => Object.values(getAllKeys()).some((k) => Boolean(k));
+
+/* ---- גרסת האפליקציה המותקנת (ל-PWA) ---- */
+export const getAppVersion = () => read<string>(K_APP_VERSION, '');
+export const setAppVersion = (v: string) => write(K_APP_VERSION, v);
 
 /* ---- פרויקטים שמורים בעורך ---- */
 export interface SavedProject {
@@ -155,7 +160,8 @@ export function resetAllProgress() {
       k !== K_KEYS &&
       k !== K_PROVIDER &&
       k !== K_MODELS &&
-      k !== K_THEME
+      k !== K_THEME &&
+      k !== K_APP_VERSION
     )
       keys.push(k);
   }

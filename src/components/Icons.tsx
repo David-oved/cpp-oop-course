@@ -103,3 +103,9 @@ export const IArrowRight = ({ size }: P) => (
 export const IStack = ({ size }: P) => (
   <svg {...base(size)}><path d="M12 2l10 6-10 6L2 8z" /><path d="M2 12l10 6 10-6M2 16l10 6 10-6" /></svg>
 );
+export const IWifiOff = ({ size }: P) => (
+  <svg {...base(size)}>
+    <path d="M1 1l22 22M16.7 16.7a7.5 7.5 0 00-9.4 0M5 12.6a12 12 0 015.5-3.1M19 12.6a12 12 0 00-2.6-2.1M8.5 4.9A16 16 0 0122 8.6" />
+    <path d="M12 20h.01" />
+  </svg>
+);

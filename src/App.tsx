@@ -21,8 +21,9 @@ import Settings from './components/Settings';
 import Ide from './components/Ide';
 import {
   IMenu, ISparkle, ISettings, ISun, IMoon, ICheck,
-  IChevRight, IChevLeft, IHome, ITerminal,
+  IChevRight, IChevLeft, IHome, ITerminal, IReset, IWifiOff,
 } from './components/Icons';
+import { onUpdateAvailable, onOnlineChange, applyUpdate, checkVersion, isOnline } from './lib/pwa';
 
 const BLANK_MAIN = `#include <iostream>
 using namespace std;
@@ -60,6 +61,35 @@ export default function App() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [, forceUpdate] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  /* ---------- PWA: עדכון גרסה + מצב חיבור ---------- */
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [online, setOnline] = useState(isOnline);
+
+  useEffect(() => {
+    const offUpdate = onUpdateAvailable((info) => setUpdateAvailable(info.available));
+    const offOnline = onOnlineChange(setOnline);
+    // כשחוזרים לאפליקציה (למשל פותחים אותה מחדש מהמסך הראשי) — בדיקת גרסה נוספת
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void checkVersion();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      offUpdate();
+      offOnline();
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
+
+  const doUpdate = useCallback(async () => {
+    setUpdating(true);
+    try {
+      await applyUpdate();
+    } catch {
+      setUpdating(false);
+    }
+  }, []);
 
   /* ---------- ערכת נושא + גודל גופן ---------- */
   useEffect(() => {
@@ -172,6 +202,12 @@ export default function App() {
             <button className="icon-btn" onClick={goHome} title="מסך הבית">
               <IHome size={18} />
             </button>
+
+            {!online && (
+              <span className="offline-pill" title="אין חיבור לאינטרנט — עובדים על התוכן השמור">
+                <IWifiOff size={13} /> אופליין
+              </span>
+            )}
 
             <div className="crumbs">
               {current ? (
@@ -321,6 +357,22 @@ export default function App() {
       {ide && <Ide req={ide} onClose={() => setIde(null)} />}
 
       {toastMsg && <div className="toast">{toastMsg}</div>}
+
+      {updateAvailable && (
+        <div className="update-banner">
+          <IReset size={17} className={updating ? 'spin' : ''} />
+          <div className="update-text">
+            <b>גרסה חדשה זמינה</b>
+            <span>עדכנו את השיעורים ותוקנו באגים. לוחצים על "עדכן" כדי לטעון את הגרסה החדשה.</span>
+          </div>
+          <button className="update-btn" onClick={doUpdate} disabled={updating}>
+            {updating ? 'מעדכן…' : 'עדכן עכשיו'}
+          </button>
+          <button className="update-dismiss" onClick={() => setUpdateAvailable(false)} disabled={updating}>
+            לא עכשיו
+          </button>
+        </div>
+      )}
     </AppCtx.Provider>
   );
 }
