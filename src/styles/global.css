@@ -2859,10 +2859,11 @@ hr.divider {
 }
 
 .update-banner {
+  /* מיקום פיזי (לא inset-inline) בכוונה — מרכוז אופקי סימטרי, לא תלוי כיוון */
   position: fixed;
   bottom: 18px;
-  inset-inline-start: 50%;
-  transform: translateX(50%);
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -2876,9 +2877,6 @@ hr.divider {
   z-index: 300;
   color: var(--accent);
   animation: toastIn 0.25s;
-}
-[dir='rtl'] .update-banner {
-  transform: translateX(-50%);
 }
 .update-banner .update-text {
   display: flex;
