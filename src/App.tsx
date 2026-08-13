@@ -66,11 +66,15 @@ export default function App() {
 
   /* ---------- PWA: עדכון גרסה + מצב חיבור ---------- */
   const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [updateNotes, setUpdateNotes] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [online, setOnline] = useState(isOnline);
 
   useEffect(() => {
-    const offUpdate = onUpdateAvailable((info) => setUpdateAvailable(info.available));
+    const offUpdate = onUpdateAvailable((info) => {
+      setUpdateAvailable(info.available);
+      setUpdateNotes(info.notes ?? null);
+    });
     const offOnline = onOnlineChange(setOnline);
     // כשחוזרים לאפליקציה (למשל פותחים אותה מחדש מהמסך הראשי) — בדיקת גרסה נוספת
     const onVisible = () => {
@@ -371,7 +375,7 @@ export default function App() {
           <IReset size={17} className={updating ? 'spin' : ''} />
           <div className="update-text">
             <b>גרסה חדשה זמינה</b>
-            <span>עדכנו את השיעורים ותוקנו באגים. לוחצים על "עדכן" כדי לטעון את הגרסה החדשה.</span>
+            <span>{updateNotes || 'עדכנו את השיעורים ותוקנו באגים. לוחצים על "עדכן" כדי לטעון את הגרסה החדשה.'}</span>
           </div>
           <button className="update-btn" onClick={doUpdate} disabled={updating}>
             {updating ? 'מעדכן…' : 'עדכן עכשיו'}

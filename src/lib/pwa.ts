@@ -11,7 +11,7 @@
 import { registerSW } from 'virtual:pwa-register';
 import { getAppVersion, setAppVersion } from './storage';
 
-export type UpdateListener = (info: { available: boolean; version?: string }) => void;
+export type UpdateListener = (info: { available: boolean; version?: string; notes?: string }) => void;
 export type OnlineListener = (online: boolean) => void;
 
 const updateListeners = new Set<UpdateListener>();
@@ -19,10 +19,13 @@ const onlineListeners = new Set<OnlineListener>();
 
 let updateSW: ((reload?: boolean) => Promise<void>) | null = null;
 let latestKnownVersion: string | null = null;
+let latestKnownNotes: string | null = null;
 let pending = false;
 
 function notifyUpdate() {
-  for (const l of updateListeners) l({ available: pending, version: latestKnownVersion ?? undefined });
+  for (const l of updateListeners) {
+    l({ available: pending, version: latestKnownVersion ?? undefined, notes: latestKnownNotes ?? undefined });
+  }
 }
 
 /** נקרא פעם אחת ב-main.tsx. רושם את ה-Service Worker ומתחיל להאזין לחיבור. */
@@ -76,9 +79,10 @@ export async function checkVersion(): Promise<{ current: string; latest: string 
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return { current, latest: null, hasUpdate: pending };
-    const data = (await res.json()) as { version?: string };
+    const data = (await res.json()) as { version?: string; notes?: string };
     const latest = data.version ?? null;
     latestKnownVersion = latest;
+    latestKnownNotes = data.notes ?? null;
 
     if (!current) {
       // התקנה ראשונה — הגרסה הנוכחית *היא* מה שהורד עכשיו, אין מה להציע לעדכן אליו

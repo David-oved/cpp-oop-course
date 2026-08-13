@@ -1,27 +1,32 @@
 import { defineConfig, type Plugin } from 'vite';
-import { execSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const projectRoot = dirname(fileURLToPath(import.meta.url));
+
 /**
- * כותב dist/version.json בסוף כל build.
+ * כותב dist/version.json בסוף כל build, על סמך release.json שבשורש הפרויקט.
  * ==זה הקובץ שהאפליקציה בודקת בכל פתיחה== (תמיד מהרשת, בלי מטמון) כדי לדעת
- * אם יש גרסה חדשה. הגרסה היא ה-SHA הקצר של הקומיט — ייחודית וקלה למעקב.
+ * אם יש גרסה חדשה. מספר הגרסה וההסבר הם ידניים לגמרי — לא נגזרים אוטומטית
+ * מה-commit — כדי שהבאנר יופיע רק כשמעדכנים את release.json בכוונה, לא בכל push.
  */
 function versionFilePlugin(): Plugin {
   return {
     name: 'write-version-json',
     apply: 'build',
     writeBundle(options) {
-      let sha = 'dev';
-      try {
-        sha = execSync('git rev-parse --short HEAD').toString().trim();
-      } catch {
-        sha = Date.now().toString(36);
-      }
-      const payload = { version: sha, builtAt: new Date().toISOString() };
+      const release = JSON.parse(readFileSync(resolve(projectRoot, 'release.json'), 'utf-8')) as {
+        version: string;
+        notes: string;
+      };
+      const payload = {
+        version: release.version,
+        notes: release.notes,
+        builtAt: new Date().toISOString(),
+      };
       const outDir = options.dir ?? 'dist';
       writeFileSync(resolve(outDir, 'version.json'), JSON.stringify(payload, null, 1));
     },
