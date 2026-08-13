@@ -401,12 +401,14 @@ a {
   min-width: 0;
 }
 .topbar {
-  height: 54px;
+  /* env(safe-area-inset-top) — כדי שהכפתורים לא ייכנסו מתחת ל-Dynamic Island / החריץ
+     כשהאפליקציה רצה כ-PWA מותקן (standalone) עם viewport-fit=cover */
+  height: calc(54px + env(safe-area-inset-top, 0px));
   flex: none;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 18px;
+  padding: env(safe-area-inset-top, 0px) 18px 0;
   border-bottom: 1px solid var(--border);
   background: var(--bg-elev);
   z-index: 5;
@@ -2946,17 +2948,21 @@ hr.divider {
   .app.sidebar-closed.ai-open { grid-template-columns: 1fr; }
   .app.ai-open .main { display: none; }
   .sidebar {
+    /* right (פיזי, לא inset-inline-end) בכוונה — האפליקציה תמיד RTL, וה-inline-end שלה
+       הוא בעצם left פיזי, מה שהזיז את הסיידבר לצד השמאלי במקום לצד שבו כפתור התפריט נמצא. */
     position: fixed;
     inset-block: 0;
-    inset-inline-end: 0;
+    right: 0;
     width: 300px;
     z-index: 90;
     box-shadow: var(--shadow-lg);
     transform: translateX(100%);
     transition: transform 0.22s;
   }
-  [dir='rtl'] .sidebar { transform: translateX(100%); }
   .app:not(.sidebar-closed) .sidebar { transform: translateX(0); }
+  .sidebar-head {
+    padding-top: calc(14px + env(safe-area-inset-top, 0px));
+  }
   .page { padding: 24px 18px 100px; }
   .page-title { font-size: 1.6rem; }
 }
