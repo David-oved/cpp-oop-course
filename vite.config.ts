@@ -21,10 +21,12 @@ function versionFilePlugin(): Plugin {
       const release = JSON.parse(readFileSync(resolve(projectRoot, 'release.json'), 'utf-8')) as {
         version: string;
         notes: string;
+        forceUpdate?: boolean;
       };
       const payload = {
         version: release.version,
         notes: release.notes,
+        forceUpdate: release.forceUpdate ?? false,
         builtAt: new Date().toISOString(),
       };
       const outDir = options.dir ?? 'dist';

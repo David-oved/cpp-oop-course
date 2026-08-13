@@ -21,6 +21,28 @@ let updateSW: ((reload?: boolean) => Promise<void>) | null = null;
 let latestKnownVersion: string | null = null;
 let latestKnownNotes: string | null = null;
 let pending = false;
+let forcing = false;
+
+/**
+ * הודעה רגעית וגסה (DOM ישיר, לא React) — כדי שתעבוד גם אם checkVersion מסתיים
+ * לפני שהאפליקציה בכלל עלתה, ולא תלויה בשום קונטקסט של קומפוננטה.
+ */
+function showForceUpdateNotice() {
+  const el = document.createElement('div');
+  el.textContent = 'מעדכן גרסה…';
+  Object.assign(el.style, {
+    position: 'fixed',
+    inset: '0',
+    zIndex: '99999',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'rgba(15,18,32,0.92)',
+    color: '#fff',
+    font: '600 17px/1.4 Heebo, system-ui, sans-serif',
+  });
+  document.body.appendChild(el);
+}
 
 function notifyUpdate() {
   for (const l of updateListeners) {
@@ -79,7 +101,7 @@ export async function checkVersion(): Promise<{ current: string; latest: string 
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return { current, latest: null, hasUpdate: pending };
-    const data = (await res.json()) as { version?: string; notes?: string };
+    const data = (await res.json()) as { version?: string; notes?: string; forceUpdate?: boolean };
     const latest = data.version ?? null;
     latestKnownVersion = latest;
     latestKnownNotes = data.notes ?? null;
@@ -90,7 +112,15 @@ export async function checkVersion(): Promise<{ current: string; latest: string 
       return { current: latest ?? '', latest, hasUpdate: pending };
     }
 
-    if (latest && latest !== current) pending = true;
+    if (latest && latest !== current) {
+      pending = true;
+      // עדכון כפוי: מנהל הקורס דחף forceUpdate=true ב-release.json — לא מחכים ללחיצה
+      if (data.forceUpdate && !forcing) {
+        forcing = true;
+        showForceUpdateNotice();
+        setTimeout(() => void applyUpdate(), 1000);
+      }
+    }
     notifyUpdate();
     return { current, latest, hasUpdate: pending };
   } catch {
