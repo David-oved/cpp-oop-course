@@ -25,7 +25,6 @@ import {
   IChevRight, IChevLeft, IHome, ITerminal, IReset, IWifiOff,
 } from './components/Icons';
 import { onUpdateAvailable, onOnlineChange, applyUpdate, checkVersion, isOnline } from './lib/pwa';
-import { consumeRedirectResult } from './lib/firebase';
 import AuthButton from './components/AuthButton';
 import Splash from './components/Splash';
 
@@ -95,11 +94,6 @@ export default function App() {
       offOnline();
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, []);
-
-  useEffect(() => {
-    // תופס משתמש שחזר זה עתה מהתחברות Google ב-redirect (מצב PWA מותקן)
-    void consumeRedirectResult();
   }, []);
 
   const doUpdate = useCallback(async () => {

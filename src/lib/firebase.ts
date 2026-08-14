@@ -59,14 +59,14 @@ export function onAuthChange(cb: (user: User | null) => void): () => void {
   return onAuthStateChanged(auth, cb);
 }
 
-/** נקרא פעם אחת בעליית האפליקציה — תופס משתמש שחזר זה עתה מהתחברות ב-redirect. */
+/**
+ * נקרא פעם אחת בעליית האפליקציה (מתוך Splash) — תופס משתמש שחזר זה עתה מהתחברות
+ * ב-redirect. ==לא בולע שגיאות== — קורא ל-Splash חייב להציג אותן למשתמש, אחרת כישלון
+ * התחברות באייפון (redirect שנכשל) נראה כמו "המסך פשוט נהיה שחור" בלי שום הסבר.
+ */
 export async function consumeRedirectResult(): Promise<User | null> {
-  try {
-    const res = await getRedirectResult(auth);
-    return res?.user ?? null;
-  } catch {
-    return null;
-  }
+  const res = await getRedirectResult(auth);
+  return res?.user ?? null;
 }
 
 export type { User };

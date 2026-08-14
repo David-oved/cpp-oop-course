@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { onAuthChange, signIn, type User } from '../lib/firebase';
+import { consumeRedirectResult, onAuthChange, signIn, type User } from '../lib/firebase';
 import { getEntryChoice, setEntryChoice } from '../lib/storage';
 import { IGoogle } from './Icons';
 
@@ -16,12 +16,30 @@ export default function Splash({ onDone }: { onDone: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /* תופס משתמש שחזר זה עתה מהתחברות Google ב-redirect (מצב PWA מותקן, בעיקר אייפון).
+     ==חייב להסתיים (redirectChecked) לפני שמחליטים אם להציג את מסך הבחירה== — אחרת יש
+     מרוץ: onAuthChange עלול לירות ראשון עם user=null לפני שתוצאת ה-redirect באמת נטענה,
+     ומראה למשתמש את מסך הבחירה שוב באמצע התחברות אמיתית. אם ה-redirect עצמו נכשל
+     (למשל storage חסום בספארי) — מציגים שגיאה במפורש, לא נעלמים לו למסך שחור בלי הסבר. */
+  const [redirectChecked, setRedirectChecked] = useState(false);
+
   useEffect(() => {
+    let cancelled = false;
+    consumeRedirectResult()
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'ההתחברות נכשלה, נסה שוב.');
+      })
+      .finally(() => {
+        if (!cancelled) setRedirectChecked(true);
+      });
     const off = onAuthChange((u) => {
       setAuthedUser(u);
       setAuthKnown(true);
     });
-    return off;
+    return () => {
+      cancelled = true;
+      off();
+    };
   }, []);
 
   useEffect(() => {
@@ -30,13 +48,13 @@ export default function Splash({ onDone }: { onDone: () => void }) {
   }, []);
 
   useEffect(() => {
-    if (!animDone || !authKnown) return;
+    if (!animDone || !authKnown || !redirectChecked) return;
     if (authedUser || getEntryChoice() === 'guest') {
       onDone();
     } else {
       setShowChoice(true);
     }
-  }, [animDone, authKnown, authedUser, onDone]);
+  }, [animDone, authKnown, redirectChecked, authedUser, onDone]);
 
   const doGoogle = async () => {
     setBusy(true);
