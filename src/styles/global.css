@@ -2427,8 +2427,120 @@ hr.divider {
   line-height: 1.6;
 }
 
-/* ---------- בחירת ספק AI ---------- */
+/* ---------- הגדרות: רשימה ראשית (drill-down) ---------- */
 .modal-wide { width: min(680px, 100%); }
+
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  background: var(--bg-elev);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  cursor: pointer;
+  width: 100%;
+}
+.settings-group .settings-row:last-child {
+  border-bottom: none;
+}
+.settings-row:hover {
+  background: var(--bg-sunken);
+}
+.settings-row-account {
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+.settings-row-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.settings-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.settings-row-text b {
+  font-size: 0.9rem;
+}
+.settings-row-text span {
+  font-size: 0.78rem;
+  color: var(--fg-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.settings-row-chev {
+  color: var(--fg-faint);
+  flex: none;
+}
+
+/* ---------- הגדרות: מסך חשבון ---------- */
+.acct-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.acct-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+.acct-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.acct-avatar.sm {
+  width: 30px;
+  height: 30px;
+}
+.acct-guest {
+  color: var(--fg-faint);
+}
+.acct-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.acct-info b {
+  font-size: 1rem;
+}
+.acct-info span {
+  font-size: 0.82rem;
+  color: var(--fg-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- בחירת ספק AI ---------- */
 
 .prov-grid {
   display: grid;
@@ -3104,6 +3216,9 @@ hr.divider {
   .app.ai-open,
   .app.sidebar-closed.ai-open { grid-template-columns: 1fr; }
   .app.ai-open .main { display: none; }
+  .ai-head {
+    padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  }
   .sidebar {
     /* right (פיזי, לא inset-inline-end) בכוונה — האפליקציה תמיד RTL, וה-inline-end שלה
        הוא בעצם left פיזי, מה שהזיז את הסיידבר לצד השמאלי במקום לצד שבו כפתור התפריט נמצא. */

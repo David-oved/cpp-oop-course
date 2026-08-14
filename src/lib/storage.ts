@@ -1,6 +1,14 @@
 /** שמירה מקומית של מפתחות ה-API, התקדמות, ותשובות לתרגילים. */
 
 import type { ProviderId } from './providers/types';
+import { auth } from './firebase';
+
+/**
+ * רק משתמש מחובר (Google) שומר התקדמות — אורח מתחיל מאפס בכל כניסה, בכוונה: בלי זה
+ * "אורח" היה בסך הכול מסך פתיחה קוסמטי, בזמן שהמכשיר בפועל היה זוכר הכול לתמיד.
+ * לא חל על מפתחות/ספק/מודל/ערכת נושא/גרסה/בחירת כניסה — אלה הגדרות מכשיר, לא התקדמות.
+ */
+const isSignedIn = () => Boolean(auth.currentUser);
 
 const K_PROVIDER = 'cppcourse.provider';
 const K_KEYS = 'cppcourse.keys';
@@ -76,8 +84,9 @@ export interface SavedProject {
   files: { name: string; code: string }[];
   savedAt: number;
 }
-export const getProjects = () => read<SavedProject[]>(K_PROJECTS, []);
+export const getProjects = () => (isSignedIn() ? read<SavedProject[]>(K_PROJECTS, []) : []);
 export function saveProject(name: string, files: { name: string; code: string }[]): SavedProject[] {
+  if (!isSignedIn()) return [];
   const list = getProjects();
   const existing = list.findIndex((p) => p.name === name);
   const proj: SavedProject = { id: `p${Date.now()}`, name, files, savedAt: Date.now() };
@@ -88,6 +97,7 @@ export function saveProject(name: string, files: { name: string; code: string }[
   return trimmed;
 }
 export function deleteProject(id: string): SavedProject[] {
+  if (!isSignedIn()) return [];
   const list = getProjects().filter((p) => p.id !== id);
   write(K_PROJECTS, list);
   return list;
@@ -101,8 +111,9 @@ export const getFontScale = () => read<number>(K_FONT, 1);
 export const setFontScale = (v: number) => write(K_FONT, v);
 
 /* ---- התקדמות: עמודים שהושלמו ---- */
-export const getCompleted = () => new Set(read<string[]>(K_DONE, []));
+export const getCompleted = () => (isSignedIn() ? new Set(read<string[]>(K_DONE, [])) : new Set<string>());
 export function toggleCompleted(sectionKey: string): Set<string> {
+  if (!isSignedIn()) return new Set<string>();
   const s = getCompleted();
   if (s.has(sectionKey)) s.delete(sectionKey);
   else s.add(sectionKey);
@@ -110,6 +121,7 @@ export function toggleCompleted(sectionKey: string): Set<string> {
   return s;
 }
 export function markCompleted(sectionKey: string): Set<string> {
+  if (!isSignedIn()) return new Set<string>();
   const s = getCompleted();
   s.add(sectionKey);
   write(K_DONE, [...s]);
@@ -117,21 +129,26 @@ export function markCompleted(sectionKey: string): Set<string> {
 }
 
 /* ---- מיקום אחרון ---- */
-export const getLastSection = () => read<string | null>(K_LAST, null);
-export const setLastSection = (v: string) => write(K_LAST, v);
+export const getLastSection = () => (isSignedIn() ? read<string | null>(K_LAST, null) : null);
+export const setLastSection = (v: string) => {
+  if (isSignedIn()) write(K_LAST, v);
+};
 
 /* ---- תוצאות חידונים ---- */
 export type QuizState = Record<string, { picked: number[]; revealed: boolean; correct: boolean }>;
-export const getQuizState = () => read<QuizState>(K_QUIZ, {});
+export const getQuizState = () => (isSignedIn() ? read<QuizState>(K_QUIZ, {}) : {});
 export function saveQuizAnswer(id: string, v: QuizState[string]) {
+  if (!isSignedIn()) return;
   const s = getQuizState();
   s[id] = v;
   write(K_QUIZ, s);
 }
 
 /* ---- קוד שהמשתמש כתב בתרגילים ---- */
-export const getExerciseCode = (id: string) => read<string | null>(`${K_EX}.${id}`, null);
-export const setExerciseCode = (id: string, code: string) => write(`${K_EX}.${id}`, code);
+export const getExerciseCode = (id: string) => (isSignedIn() ? read<string | null>(`${K_EX}.${id}`, null) : null);
+export const setExerciseCode = (id: string, code: string) => {
+  if (isSignedIn()) write(`${K_EX}.${id}`, code);
+};
 
 /* ---- קטעי קוד שמורים בסביבת הפיתוח ---- */
 export interface Snippet {
@@ -140,8 +157,9 @@ export interface Snippet {
   code: string;
   savedAt: number;
 }
-export const getSnippets = () => read<Snippet[]>(K_SCRATCH, []);
+export const getSnippets = () => (isSignedIn() ? read<Snippet[]>(K_SCRATCH, []) : []);
 export function saveSnippet(name: string, code: string): Snippet[] {
+  if (!isSignedIn()) return [];
   const list = getSnippets();
   const s: Snippet = { id: `s${Date.now()}`, name, code, savedAt: Date.now() };
   list.unshift(s);
@@ -150,6 +168,7 @@ export function saveSnippet(name: string, code: string): Snippet[] {
   return trimmed;
 }
 export function deleteSnippet(id: string): Snippet[] {
+  if (!isSignedIn()) return [];
   const list = getSnippets().filter((s) => s.id !== id);
   write(K_SCRATCH, list);
   return list;
