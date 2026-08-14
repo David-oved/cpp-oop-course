@@ -24,23 +24,18 @@ let pending = false;
 let forcing = false;
 
 /**
- * הודעה רגעית וגסה (DOM ישיר, לא React) — כדי שתעבוד גם אם checkVersion מסתיים
- * לפני שהאפליקציה בכלל עלתה, ולא תלויה בשום קונטקסט של קומפוננטה.
+ * מסך מותג מלא (DOM ישיר, לא React) — משותף לעדכון ידני ולעדכון כפוי כאחד, כדי שהחוויה
+ * תהיה אחידה. DOM ישיר ולא React כי זה צריך לעבוד גם אם checkVersion מסתיים לפני שהאפליקציה
+ * בכלל עלתה (עדכון כפוי שמתגלה מוקדם), ולא תלוי בשום קונטקסט של קומפוננטה. משתמש במחלקות
+ * CSS מ-global.css (כבר טעון בעמוד) כדי לא לשכפל עיצוב ב-inline styles.
  */
-function showForceUpdateNotice() {
+function showUpdateOverlay() {
   const el = document.createElement('div');
-  el.textContent = 'מעדכן גרסה…';
-  Object.assign(el.style, {
-    position: 'fixed',
-    inset: '0',
-    zIndex: '99999',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'rgba(15,18,32,0.92)',
-    color: '#fff',
-    font: '600 17px/1.4 Heebo, system-ui, sans-serif',
-  });
+  el.className = 'update-overlay';
+  el.innerHTML = `
+    <div class="update-overlay-mark">C++</div>
+    <div class="update-overlay-text">מעדכן גרסה…</div>
+  `;
   document.body.appendChild(el);
 }
 
@@ -114,11 +109,11 @@ export async function checkVersion(): Promise<{ current: string; latest: string 
 
     if (latest && latest !== current) {
       pending = true;
-      // עדכון כפוי: מנהל הקורס דחף forceUpdate=true ב-release.json — לא מחכים ללחיצה
+      // עדכון כפוי: מנהל הקורס דחף forceUpdate=true ב-release.json — לא מחכים ללחיצה.
+      // applyUpdate() בעצמו כבר מציג את מסך הטעינה ומחכה רגע לפני הריענון בפועל.
       if (data.forceUpdate && !forcing) {
         forcing = true;
-        showForceUpdateNotice();
-        setTimeout(() => void applyUpdate(), 1000);
+        void applyUpdate();
       }
     }
     notifyUpdate();
@@ -128,13 +123,20 @@ export async function checkVersion(): Promise<{ current: string; latest: string 
   }
 }
 
-/** מפעיל את הגרסה החדשה: מחליף Service Worker ומרענן את הדף. */
+/**
+ * מפעיל את הגרסה החדשה: מציג מסך טעינה ממותג לרגע (כדי שהמשתמש "ירגיש" את העדכון),
+ * ואז מחליף Service Worker ומרענן את הדף. משותף לעדכון ידני (כפתור בבאנר) ולעדכון כפוי.
+ */
 export async function applyUpdate(): Promise<void> {
+  showUpdateOverlay();
   if (latestKnownVersion) setAppVersion(latestKnownVersion);
+  await new Promise((resolve) => setTimeout(resolve, 1000));
   if (updateSW) {
-    await updateSW(true); // reload=true — workbox מרענן אחרי ההפעלה
-    return;
+    // updateSW(true) מחכה לאירוע controllerchange לפני שהוא מרענן. אם מסיבה כלשהי אין
+    // Service Worker חדש שממתין (לדוגמה אין באמת build חדש), האירוע הזה אף פעם לא יגיע
+    // וה-Promise נתקע לנצח — והמשתמש נשאר תקוע על מסך הטעינה. Promise.race עם timeout
+    // מבטיח שתמיד יהיה רענון בסוף, גם אם ה-SW לא מגיב.
+    await Promise.race([updateSW(true), new Promise((resolve) => setTimeout(resolve, 6000))]);
   }
-  // גיבוי: אין Service Worker רשום (למשל בפיתוח מקומי) — רענון רגיל מספיק
   location.reload();
 }

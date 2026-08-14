@@ -14,6 +14,7 @@ const K_EX = 'cppcourse.exercises';
 const K_THEME = 'cppcourse.theme';
 const K_LAST = 'cppcourse.lastSection';
 const K_FONT = 'cppcourse.fontScale';
+const K_ENTRY = 'cppcourse.entryChoice';
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -62,6 +63,11 @@ export const hasAnyKey = () => Object.values(getAllKeys()).some((k) => Boolean(k
 /* ---- גרסת האפליקציה המותקנת (ל-PWA) ---- */
 export const getAppVersion = () => read<string>(K_APP_VERSION, '');
 export const setAppVersion = (v: string) => write(K_APP_VERSION, v);
+
+/* ---- בחירת כניסה במסך הפתיחה: גוגל מזוהה דרך Firebase עצמו, "אורח" נשמר כאן ---- */
+export type EntryChoice = 'guest' | null;
+export const getEntryChoice = () => read<EntryChoice>(K_ENTRY, null);
+export const setEntryChoice = (v: EntryChoice) => write(K_ENTRY, v);
 
 /* ---- פרויקטים שמורים בעורך ---- */
 export interface SavedProject {
@@ -161,7 +167,8 @@ export function resetAllProgress() {
       k !== K_PROVIDER &&
       k !== K_MODELS &&
       k !== K_THEME &&
-      k !== K_APP_VERSION
+      k !== K_APP_VERSION &&
+      k !== K_ENTRY
     )
       keys.push(k);
   }

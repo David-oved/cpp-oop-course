@@ -26,6 +26,7 @@ import {
 import { onUpdateAvailable, onOnlineChange, applyUpdate, checkVersion, isOnline } from './lib/pwa';
 import { consumeRedirectResult } from './lib/firebase';
 import AuthButton from './components/AuthButton';
+import Splash from './components/Splash';
 
 const BLANK_MAIN = `#include <iostream>
 using namespace std;
@@ -38,6 +39,9 @@ int main()
 `;
 
 export default function App() {
+  /* ---------- מסך פתיחה: אנימציה + בחירת התחברות/אורח ---------- */
+  const [entered, setEntered] = useState(false);
+
   /* ---------- ניווט ---------- */
   const [route, setRoute] = useState<{ lessonId: string; sectionId: string } | null>(() => {
     const last = getLastSection();
@@ -194,6 +198,8 @@ export default function App() {
     sidebarOpen ? '' : 'sidebar-closed',
   ].filter(Boolean).join(' ');
 
+  if (!entered) return <Splash onDone={() => setEntered(true)} />;
+
   return (
     <AppCtx.Provider value={api}>
       <div className={cls}>
@@ -203,7 +209,9 @@ export default function App() {
           completed={completed}
           onNavigate={navigate}
           onHome={goHome}
+          onClose={() => setSidebarOpen(false)}
         />
+        {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
 
         <main className="main">
           <header className="topbar">
@@ -372,17 +380,21 @@ export default function App() {
 
       {updateAvailable && (
         <div className="update-banner">
-          <IReset size={17} className={updating ? 'spin' : ''} />
-          <div className="update-text">
+          <div className="update-banner-head">
+            <IReset size={16} className={updating ? 'spin' : ''} />
             <b>גרסה חדשה זמינה</b>
-            <span>{updateNotes || 'עדכנו את השיעורים ותוקנו באגים. לוחצים על "עדכן" כדי לטעון את הגרסה החדשה.'}</span>
           </div>
-          <button className="update-btn" onClick={doUpdate} disabled={updating}>
-            {updating ? 'מעדכן…' : 'עדכן עכשיו'}
-          </button>
-          <button className="update-dismiss" onClick={() => setUpdateAvailable(false)} disabled={updating}>
-            לא עכשיו
-          </button>
+          <p className="update-banner-notes">
+            {updateNotes || 'עדכנו את השיעורים ותוקנו באגים. לוחצים על "עדכן" כדי לטעון את הגרסה החדשה.'}
+          </p>
+          <div className="update-banner-actions">
+            <button className="update-dismiss" onClick={() => setUpdateAvailable(false)} disabled={updating}>
+              תזכיר לי מאוחר יותר
+            </button>
+            <button className="update-btn" onClick={doUpdate} disabled={updating}>
+              {updating ? 'מעדכן…' : 'עדכן עכשיו'}
+            </button>
+          </div>
         </div>
       )}
     </AppCtx.Provider>

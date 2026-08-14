@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { LESSONS } from '../content';
 import { countSections } from '../types/content';
-import { ICheck, ISearch } from './Icons';
+import { ICheck, ISearch, IClose } from './Icons';
 
 export default function Sidebar({
   lessonId,
@@ -9,12 +9,14 @@ export default function Sidebar({
   completed,
   onNavigate,
   onHome,
+  onClose,
 }: {
   lessonId: string | null;
   sectionId: string | null;
   completed: Set<string>;
   onNavigate: (lessonId: string, sectionId: string) => void;
   onHome: () => void;
+  onClose: () => void;
 }) {
   const [open, setOpen] = useState<Set<string>>(new Set(lessonId ? [lessonId] : ['l01']));
   const [q, setQ] = useState('');
@@ -46,6 +48,9 @@ export default function Sidebar({
   return (
     <nav className="sidebar">
       <div className="sidebar-head">
+        <button className="sidebar-close" onClick={onClose} title="סגור תפריט">
+          <IClose size={18} />
+        </button>
         <button className="brand" onClick={onHome} style={{ width: '100%', textAlign: 'start' }}>
           <span className="brand-mark">C++</span>
           <span>
