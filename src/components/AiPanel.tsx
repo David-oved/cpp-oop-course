@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { activeSetup, askAI, suggestedQuestions, type AskContext, type ChatTurn } from '../lib/ai';
+import { activeSetup, suggestedQuestions, type AskContext, type ChatTurn } from '../lib/ai';
 import { renderMarkdown } from '../lib/markdown';
 import { IClose, ISend, ISparkle, ISettings } from './Icons';
 
@@ -16,6 +16,13 @@ export default function AiPanel({
   clearPending,
   onClose,
   onOpenSettings,
+  turns,
+  streaming,
+  busy,
+  error,
+  send: sendChat,
+  stop: stopChat,
+  reset: resetChat,
 }: {
   ctx: AskContext;
   focus: AiFocus | null;
@@ -24,14 +31,17 @@ export default function AiPanel({
   clearPending: () => void;
   onClose: () => void;
   onOpenSettings: () => void;
+  /** state ומתודות השיחה — חיים ב-App כדי לשרוד סגירה/פתיחה מחדש של הפאנל וניווט בין עמודים */
+  turns: ChatTurn[];
+  streaming: string;
+  busy: boolean;
+  error: string | null;
+  send: (text: string, ctx: AskContext) => void;
+  stop: () => void;
+  reset: () => void;
 }) {
-  const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [draft, setDraft] = useState('');
-  const [streaming, setStreaming] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const stopRef = useRef<(() => void) | null>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
 
   const setup = activeSetup();
@@ -72,21 +82,19 @@ export default function AiPanel({
     return () => el?.removeEventListener('click', h);
   }, []);
 
+  const [localError, setLocalError] = useState<string | null>(null);
+  const shownError = localError ?? error;
+
   const send = (text?: string) => {
     const q = (text ?? draft).trim();
     if (!q || busy) return;
     if (!hasKey) {
-      setError(`לא הוגדר מפתח עבור ${setup.provider.vendor}. פתח את ההגדרות ובחר ספק.`);
+      setLocalError(`לא הוגדר מפתח עבור ${setup.provider.vendor}. פתח את ההגדרות ובחר ספק.`);
       return;
     }
 
-    setError(null);
+    setLocalError(null);
     setDraft('');
-    setStreaming('');
-    setBusy(true);
-
-    const history = [...turns];
-    setTurns([...history, { role: 'user', content: q }]);
 
     const fullCtx: AskContext = {
       ...ctx,
@@ -94,32 +102,11 @@ export default function AiPanel({
       focusLabel: focus?.label,
     };
 
-    stopRef.current = askAI(q, fullCtx, history, {
-      onText: (chunk) => setStreaming((s) => s + chunk),
-      onDone: (full) => {
-        setTurns((t) => [...t, { role: 'assistant', content: full }]);
-        setStreaming('');
-        setBusy(false);
-      },
-      onError: (msg) => {
-        setError(msg);
-        setStreaming('');
-        setBusy(false);
-        setTurns((t) => t.slice(0, -1));
-      },
-    });
-  };
-
-  const reset = () => {
-    stopRef.current?.();
-    setTurns([]);
-    setStreaming('');
-    setError(null);
-    setBusy(false);
+    sendChat(q, fullCtx);
   };
 
   return (
-    <aside className="ai-panel">
+    <aside className={`ai-panel${focus ? ' ai-panel-popup' : ''}`}>
       <div className="ai-head">
         <div className="ai-avatar">
           <ISparkle size={16} />
@@ -139,7 +126,7 @@ export default function AiPanel({
           </div>
         </div>
         {turns.length > 0 && (
-          <button className="btn btn-sm btn-ghost" onClick={reset}>
+          <button className="btn btn-sm btn-ghost" onClick={resetChat}>
             שיחה חדשה
           </button>
         )}
@@ -218,7 +205,7 @@ export default function AiPanel({
           </div>
         )}
 
-        {error && <div className="ai-error">{error}</div>}
+        {shownError && <div className="ai-error">{shownError}</div>}
       </div>
 
       <div className="ai-input-wrap">
@@ -247,7 +234,7 @@ export default function AiPanel({
               לשורה חדשה
             </span>
             {busy ? (
-              <button className="btn btn-sm btn-ghost" onClick={() => stopRef.current?.()}>
+              <button className="btn btn-sm btn-ghost" onClick={stopChat}>
                 עצור
               </button>
             ) : (

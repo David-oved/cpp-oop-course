@@ -5,6 +5,7 @@ import { wrapProject, wrapSnippet } from '../lib/wrap';
 import { renderInline } from '../lib/markdown';
 import { useApp } from '../AppContext';
 import { ICopy, ICheck, IPlay, ITerminal, IEye } from './Icons';
+import CodeFileModal from './CodeFileModal';
 import type { CodeAnnotation, CodeFile } from '../types/content';
 
 /** רינדור קוד מודגש עם מספרי שורות ואפשרות להדגיש שורות מסוימות. */
@@ -78,6 +79,7 @@ export default function CodeBlock(p: CodeBlockProps) {
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<CompileResult | null>(null);
   const [showSent, setShowSent] = useState(false);
+  const [showFile, setShowFile] = useState(false);
 
   const files = p.files;
   const active = files ? files[Math.min(tab, files.length - 1)] : null;
@@ -125,24 +127,33 @@ export default function CodeBlock(p: CodeBlockProps) {
               <button className="code-act" onClick={copy}>
                 {copied ? <ICheck size={12} /> : <ICopy size={12} />} {copied ? 'הועתק' : 'העתק'}
               </button>
+              {/* עורך קוד/הרצה (Wandbox) — דסקטופ בלבד. במובייל אין סביבת הרצה כלל */}
               {isCpp && (
-                <button
-                  className="code-act"
-                  onClick={() =>
-                    app.openIde({
-                      files: prepared.files,
-                      title: p.title ?? 'קוד מהשיעור',
-                      stdin: p.stdin,
-                    })
-                  }
-                >
-                  <ITerminal size={12} /> פתח בעורך
-                </button>
+                <span className="code-desktop-actions">
+                  <button
+                    className="code-act"
+                    onClick={() =>
+                      app.openIde({
+                        files: prepared.files,
+                        title: p.title ?? 'קוד מהשיעור',
+                        stdin: p.stdin,
+                      })
+                    }
+                  >
+                    <ITerminal size={12} /> פתח בעורך
+                  </button>
+                  {p.runnable && (
+                    <button className="code-act run" onClick={run} disabled={running}>
+                      {running ? <span className="spinner" /> : <IPlay size={11} />}{' '}
+                      {running ? 'מריץ…' : 'הרץ'}
+                    </button>
+                  )}
+                </span>
               )}
-              {p.runnable && (
-                <button className="code-act run" onClick={run} disabled={running}>
-                  {running ? <span className="spinner" /> : <IPlay size={11} />}{' '}
-                  {running ? 'מריץ…' : 'הרץ'}
+              {/* צפייה בקובץ המלא בחלון גלילה במרכז המסך — מובייל בלבד */}
+              {isCpp && (
+                <button className="code-act code-mobile-actions" onClick={() => setShowFile(true)}>
+                  <IEye size={12} /> הצג קובץ מלא
                 </button>
               )}
             </div>
@@ -204,6 +215,16 @@ export default function CodeBlock(p: CodeBlockProps) {
         {result && <RunResult r={result} />}
       </div>
       {p.caption && <div className="code-caption">{p.caption}</div>}
+
+      {showFile && (
+        <CodeFileModal
+          files={files ?? [{ name: p.title ?? 'main.cpp', code: p.code ?? '' }]}
+          title={p.title}
+          annotations={p.annotations}
+          caption={p.caption}
+          onClose={() => setShowFile(false)}
+        />
+      )}
     </div>
   );
 }
