@@ -7,6 +7,7 @@ import { LESSONS } from './content';
 import { wrapProject, wrapSnippet } from './lib/wrap';
 import { runProject } from './lib/compile';
 import { initPwa } from './lib/pwa';
+import './lib/sync'; // מפעיל את עצמו: מאזין להתחברות/התנתקות ומסנכרן עם Firestore
 
 // נרשם רק ב-build אמיתי — ב-vite dev אין service worker (devOptions.enabled: false)
 if (import.meta.env.PROD) initPwa();

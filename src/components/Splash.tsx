@@ -90,7 +90,7 @@ export default function Splash({ onDone }: { onDone: () => void }) {
           </button>
           {error && <div className="splash-error">{error}</div>}
           <p className="splash-note">
-            התחברות משמשת לסנכרון בין מכשירים בעתיד — אפשר להשתמש בכל התוכן גם כאורח.
+            התחברות מסנכרנת את ההתקדמות שלך אוטומטית בין מכשירים — אפשר להשתמש בכל התוכן גם כאורח.
           </p>
         </div>
       )}

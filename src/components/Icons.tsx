@@ -123,3 +123,15 @@ export const IWifiOff = ({ size }: P) => (
     <path d="M12 20h.01" />
   </svg>
 );
+export const IShare = ({ size }: P) => (
+  <svg {...base(size)}>
+    <path d="M12 16V4M7 8l5-5 5 5" />
+    <path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+  </svg>
+);
+export const IDownload = ({ size }: P) => (
+  <svg {...base(size)}>
+    <path d="M12 3v12M7 10l5 5 5-5" />
+    <path d="M4 19h16" />
+  </svg>
+);

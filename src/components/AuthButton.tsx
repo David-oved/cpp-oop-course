@@ -66,7 +66,7 @@ export default function AuthButton() {
               <span>{user.email}</span>
             </div>
           </div>
-          <div className="user-menu-note">מחובר/ת בהצלחה. סנכרון התקדמות וקוד בין מכשירים יופעל בקרוב.</div>
+          <div className="user-menu-note">מחובר/ת בהצלחה. התקדמות, תרגילים ופרויקטים שמורים מסונכרנים אוטומטית בין המכשירים שלך.</div>
           <button className="user-menu-signout" onClick={doSignOut}>
             התנתקות
           </button>

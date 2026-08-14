@@ -25,8 +25,10 @@ import {
   IChevRight, IChevLeft, IHome, ITerminal, IReset, IWifiOff,
 } from './components/Icons';
 import { onUpdateAvailable, onOnlineChange, applyUpdate, checkVersion, isOnline } from './lib/pwa';
+import { isStandalone } from './lib/firebase';
 import AuthButton from './components/AuthButton';
 import Splash from './components/Splash';
+import InstallBanner from './components/InstallBanner';
 
 const BLANK_MAIN = `#include <iostream>
 using namespace std;
@@ -79,11 +81,20 @@ export default function App() {
   const [online, setOnline] = useState(isOnline);
 
   useEffect(() => {
+    const offOnline = onOnlineChange(setOnline);
+    return () => offOnline();
+  }, []);
+
+  useEffect(() => {
+    // באנר עדכון גרסה רלוונטי רק למי שהתקין את האפליקציה על המכשיר (standalone) —
+    // מי שפותח בטאב דפדפן רגיל ממילא טוען את הדף מחדש בכל כניסה, כך שהוא תמיד
+    // מקבל את הגרסה העדכנית בלי שום התראה. (עדכון כפוי — forceUpdate ב-release.json —
+    // עדיין חל על כולם, ללא תלות בבאנר הזה, כי הוא מטופל ישירות בתוך checkVersion.)
+    if (!isStandalone()) return;
     const offUpdate = onUpdateAvailable((info) => {
       setUpdateAvailable(info.available);
       setUpdateNotes(info.notes ?? null);
     });
-    const offOnline = onOnlineChange(setOnline);
     // כשחוזרים לאפליקציה (למשל פותחים אותה מחדש מהמסך הראשי) — בדיקת גרסה נוספת
     const onVisible = () => {
       if (document.visibilityState === 'visible') void checkVersion();
@@ -91,7 +102,6 @@ export default function App() {
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       offUpdate();
-      offOnline();
       document.removeEventListener('visibilitychange', onVisible);
     };
   }, []);
@@ -417,6 +427,8 @@ export default function App() {
           </div>
         </div>
       )}
+
+      <InstallBanner />
     </AppCtx.Provider>
   );
 }

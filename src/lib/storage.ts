@@ -23,6 +23,7 @@ const K_THEME = 'cppcourse.theme';
 const K_LAST = 'cppcourse.lastSection';
 const K_FONT = 'cppcourse.fontScale';
 const K_ENTRY = 'cppcourse.entryChoice';
+const K_INSTALL_DISMISS = 'cppcourse.installDismissedAt';
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -76,6 +77,10 @@ export const setAppVersion = (v: string) => write(K_APP_VERSION, v);
 export type EntryChoice = 'guest' | null;
 export const getEntryChoice = () => read<EntryChoice>(K_ENTRY, null);
 export const setEntryChoice = (v: EntryChoice) => write(K_ENTRY, v);
+
+/* ---- מתי נדחה לאחרונה באנר "התקינו את האפליקציה" (הגדרת מכשיר, לא מסונכרן) ---- */
+export const getInstallDismissedAt = () => read<number>(K_INSTALL_DISMISS, 0);
+export const setInstallDismissedAt = (v: number) => write(K_INSTALL_DISMISS, v);
 
 /* ---- פרויקטים שמורים בעורך ---- */
 export interface SavedProject {
@@ -187,7 +192,8 @@ export function resetAllProgress() {
       k !== K_MODELS &&
       k !== K_THEME &&
       k !== K_APP_VERSION &&
-      k !== K_ENTRY
+      k !== K_ENTRY &&
+      k !== K_INSTALL_DISMISS
     )
       keys.push(k);
   }
