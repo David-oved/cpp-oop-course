@@ -55,8 +55,9 @@ export default function Exercise({
 
       <div className="ex-body">
         <div className="ex-actions">
+          {/* סביבת פיתוח/הרצה — דסקטופ בלבד, אין עורך קוד במובייל */}
           <button
-            className="btn btn-primary btn-sm"
+            className="btn btn-primary btn-sm ide-desktop-only"
             onClick={() =>
               app.openIde({
                 files: [{ name: 'main.cpp', code: starter }],
@@ -70,6 +71,10 @@ export default function Exercise({
           >
             <ITerminal size={14} /> פתח בסביבת הפיתוח
           </button>
+          <span className="ex-mobile-note">
+            תרגול אינטראקטיבי (כתיבה והרצה) זמין בגרסת דסקטופ. במובייל אפשר לקרוא את הרמזים,
+            לצפות בפתרון ולשאול את ה-AI.
+          </span>
 
           {shownHints < hints.length && (
             <button

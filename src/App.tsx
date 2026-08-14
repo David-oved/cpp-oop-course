@@ -13,6 +13,7 @@ import {
   type Theme,
 } from './lib/storage';
 import { AppCtx, type IdeRequest } from './AppContext';
+import { useAiChat } from './hooks/useAiChat';
 import Sidebar from './components/Sidebar';
 import Home from './components/Home';
 import BlockRenderer from './components/BlockRenderer';
@@ -67,6 +68,10 @@ export default function App() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [, forceUpdate] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  /* ---------- שיחת ה-AI: state שחי כאן (לא בתוך AiPanel) כדי להתמיד בין ---------- */
+  /* ---------- סגירה/פתיחה של הפאנל וניווט בין עמודים, ולהתאפס רק כשהאפליקציה נסגרת ---------- */
+  const chat = useAiChat();
 
   /* ---------- PWA: עדכון גרסה + מצב חיבור ---------- */
   const [updateAvailable, setUpdateAvailable] = useState(false);
@@ -151,6 +156,13 @@ export default function App() {
     setAiOpen(true);
   }, []);
 
+  /* סגירת פאנל ה-AI: מנקה גם מיקוד, כדי שפתיחה כללית הבאה (FAB/סרגל עליון) לא "תדביק"
+     מיקוד ישן ותיפתח כחלון קופץ במקום כפאנל צד */
+  const closeAi = useCallback(() => {
+    setAiOpen(false);
+    setAiFocus(null);
+  }, []);
+
   const openIde = useCallback((req: IdeRequest) => setIde(req), []);
 
   const api = useMemo(() => ({ askAi, openIde, toast }), [askAi, openIde, toast]);
@@ -192,9 +204,15 @@ export default function App() {
   const sectionKey = current ? `${current.lessonId}/${current.section.id}` : '';
   const isDone = completed.has(sectionKey);
 
+  /* מובייל: פתיחה כללית (FAB/סרגל עליון, בלי מיקוד) = פאנל מלא-מסך כמו היום.
+     פתיחה מתוך שיעור (עם מיקוד) = חלון קופץ במרכז המסך. ה-CSS בפועל מוגבל
+     ל-max-width:980px, כך שבדסקטופ שני המצבים נראים זהים (פאנל צד). */
+  const aiPopup = aiOpen && Boolean(aiFocus);
+
   const cls = [
     'app',
     aiOpen ? 'ai-open' : '',
+    aiPopup ? 'ai-popup' : '',
     sidebarOpen ? '' : 'sidebar-closed',
   ].filter(Boolean).join(' ');
 
@@ -212,6 +230,7 @@ export default function App() {
           onClose={() => setSidebarOpen(false)}
         />
         {sidebarOpen && <div className="sidebar-backdrop" onClick={() => setSidebarOpen(false)} />}
+        {aiPopup && <div className="ai-backdrop" onClick={closeAi} />}
 
         <main className="main">
           <header className="topbar">
@@ -243,7 +262,7 @@ export default function App() {
             </div>
 
             <button
-              className="icon-btn"
+              className="icon-btn ide-desktop-only"
               onClick={() =>
                 openIde({
                   files: [{ name: 'main.cpp', code: BLANK_MAIN }],
@@ -267,7 +286,7 @@ export default function App() {
             </button>
             <button
               className={`icon-btn${aiOpen ? ' on' : ''}`}
-              onClick={() => setAiOpen((o) => !o)}
+              onClick={() => (aiOpen ? closeAi() : setAiOpen(true))}
               title="עוזר AI (/)"
             >
               <ISparkle size={18} />
@@ -358,8 +377,15 @@ export default function App() {
             clearFocus={() => setAiFocus(null)}
             pendingQuestion={aiPending}
             clearPending={() => setAiPending(null)}
-            onClose={() => setAiOpen(false)}
+            onClose={closeAi}
             onOpenSettings={() => setSettingsOpen(true)}
+            turns={chat.turns}
+            streaming={chat.streaming}
+            busy={chat.busy}
+            error={chat.error}
+            send={chat.send}
+            stop={chat.stop}
+            reset={chat.reset}
           />
         )}
       </div>

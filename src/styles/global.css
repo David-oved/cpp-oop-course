@@ -799,6 +799,14 @@ h4.b-h {
 .code-act:disabled {
   opacity: 0.5;
 }
+/* עורך/הרצה — דסקטופ בלבד; "הצג קובץ מלא" — מובייל בלבד (ראו MOBILE_UX_SPEC.md) */
+.code-desktop-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+.code-mobile-actions {
+  display: none;
+}
 
 .code-tabs {
   display: flex;
@@ -1497,6 +1505,13 @@ pre.code code {
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
+}
+/* הערה שמוצגת רק במובייל, במקום כפתור "פתח בסביבת הפיתוח" (ide-desktop-only) */
+.ex-mobile-note {
+  display: none;
+  font-size: 0.82rem;
+  color: var(--fg-faint);
+  line-height: 1.6;
 }
 .hint-box {
   margin-top: 12px;
@@ -2540,8 +2555,13 @@ hr.divider {
   white-space: nowrap;
 }
 
-/* ---------- בחירת ספק AI ---------- */
+/* ---------- תצוגת "קובץ מלא" (מובייל) — חלון גלילה במרכז המסך, לא ניווט/עורך ---------- */
+.modal-code { width: min(760px, 100%); }
+.modal-code-tabs { padding-inline: 22px; }
+.modal-code-body { padding: 16px 22px 20px; gap: 12px; }
+.modal-code-body .codeblock { box-shadow: none; }
 
+/* ---------- בחירת ספק AI ---------- */
 .prov-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -3262,6 +3282,88 @@ hr.divider {
   }
   .page { padding: 24px 18px 100px; }
   .page-title { font-size: 1.6rem; }
+
+  /* ---------- אין IDE/הרצה במובייל כלל (ראו MOBILE_UX_SPEC.md) ---------- */
+  .ide-desktop-only { display: none; }
+  .code-desktop-actions { display: none; }
+  .code-mobile-actions { display: inline-flex; }
+  .ex-mobile-note { display: block; }
+
+  /* ---------- פאנל ה-AI: פתיחה כללית (FAB/סרגל עליון) = פאנל מסך-מלא כמו היום.
+     פתיחה מתוך שיעור (עם מיקוד על קטע ספציפי) = חלון קופץ במרכז המסך, עם תוכן
+     העמוד עדיין גלוי (ומעומעם) מאחור — לנוחות קריאה מרבית. ---------- */
+  .app.ai-open.ai-popup .main { display: block; }
+  .ai-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 105;
+    animation: toastIn 0.15s;
+  }
+  .ai-panel-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(440px, calc(100vw - 32px));
+    max-height: min(76vh, 620px);
+    border-radius: var(--r-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    z-index: 110;
+  }
+
+  /* ---------- הגדרות: מסך מלא-מובייל, לא כרטיס דסקטופ מוקטן (JSX של Settings.tsx
+     לא משתנה כאן בכוונה — רק CSS אדיטיבי, ראה גבול האחריות במפרט המשימה) ---------- */
+  .modal-wide {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+  .modal-wide .modal-head {
+    padding-top: calc(14px + env(safe-area-inset-top, 0px));
+  }
+
+  /* ---------- תצוגת "קובץ מלא": נשאר חלון גלילה במרכז המסך (לא מסך-מלא, לא ניווט) ---------- */
+  .modal-code {
+    width: calc(100vw - 28px);
+    max-height: 82vh;
+  }
+
+  /* ---------- מסך הבית: פריסה מובייל-נייטיבית, לא דחיסה של פריסת הדסקטופ ---------- */
+  .home { padding: 18px 14px 90px; }
+  .home-hero { padding: 22px 18px; border-radius: var(--r); }
+  .home-hero h1 { font-size: 1.55rem; }
+  .home-hero p { font-size: 0.92rem; max-width: none; }
+  .hero-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .hero-stat {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: var(--r-sm);
+    padding: 10px 12px;
+  }
+  .feature-grid {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 10px;
+    padding-bottom: 4px;
+    margin-inline: -14px;
+    padding-inline: 14px;
+  }
+  .feature {
+    flex: 0 0 80%;
+    scroll-snap-align: start;
+  }
+  .lesson-cards { grid-template-columns: 1fr; }
+  .lesson-card { padding: 14px 16px; }
 }
 
 @media print {
