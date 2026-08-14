@@ -1,0 +1,22 @@
+// כללי אבטחה של Firestore לאפליקציית הקורס.
+//
+// מבנה הנתונים: מסמך יחיד לכל משתמש מחובר, ב-users/{uid}, ובו כל מה שמסונכרן
+// (התקדמות, תשובות לחידונים, קוד תרגילים, פרויקטים/קטעי קוד שמורים, ערכת נושא/גודל גופן).
+// מפתחות API אף פעם לא מסונכרנים לענן — הם נשארים רק ב-localStorage במכשיר.
+//
+// כלל הגישה: משתמש יכול לקרוא/לכתוב אך ורק למסמך שה-uid שלו תואם למזהה המסמך
+// (request.auth.uid — מגיע מטוקן ה-Firebase Auth המאומת, אי אפשר לזייף אותו מהקליינט).
+// משתמש אורח (לא מחובר) לא מאומת בכלל, ולכן request.auth == null ואין לו גישה לשום דבר.
+// כל אוסף/מסמך אחר שלא הוגדר במפורש — חסום כברירת מחדל (deny by default).
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
