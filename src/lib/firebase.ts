@@ -33,8 +33,13 @@ export const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 /**
- * PWA מותקן (standalone) — ב-iOS בפרט, popup להתחברות נחסם/מתנהג לא אמין בתוך
- * מצב standalone, ולכן משתמשים ב-redirect שם. בדפדפן רגיל popup נוח יותר (לא עוזב את הדף).
+ * PWA מותקן (standalone) — התנהגות ה-popup שם לא אחידה בין גרסאות iOS. ==redirect כברירת
+ * מחדל ל-standalone נוסה בעבר וגרם לתקלה קשה יותר==: ניווט מלא מחוץ ל-scope של ה-PWA
+ * גורם ל-iOS "להרוג" את תהליך ה-WKWebView, וכשהוא חוזר מ-Google הוא עולה מאתחול קר —
+ * כל מצב ה-SPA (כולל ה-sessionStorage שבו Firebase שומר את בקשת ה-redirect הממתינה) אבד,
+ * וזה נראה למשתמש כמו "האפליקציה קרסה והתאפסה". לכן מנסים קודם popup גם ב-standalone;
+ * רק אם הוא נכשל לגמרי להיפתח (חלון לא נפתח בכלל — לא ביטול מכוון של המשתמש) נופלים
+ * חזרה ל-redirect כרשת ביטחון.
  */
 export function isStandalone(): boolean {
   const mq = window.matchMedia('(display-mode: standalone)').matches;
@@ -43,12 +48,19 @@ export function isStandalone(): boolean {
 }
 
 export async function signIn(): Promise<User | null> {
-  if (isStandalone()) {
-    await signInWithRedirect(auth, provider);
-    return null; // התוצאה תתקבל אחרי החזרה מגוגל, דרך consumeRedirectResult
+  try {
+    const res = await signInWithPopup(auth, provider);
+    return res.user;
+  } catch (e) {
+    const code = e instanceof Object && 'code' in e ? String((e as { code: unknown }).code) : '';
+    // כישלון פתיחה בפועל (החלון לא נפתח/לא נתמך בסביבה) — לא ביטול מכוון של המשתמש
+    const popupCouldNotOpen = code === 'auth/popup-blocked' || code === 'auth/operation-not-supported-in-this-environment';
+    if (isStandalone() && popupCouldNotOpen) {
+      await signInWithRedirect(auth, provider);
+      return null; // התוצאה תתקבל אחרי החזרה מגוגל, דרך consumeRedirectResult
+    }
+    throw e;
   }
-  const res = await signInWithPopup(auth, provider);
-  return res.user;
 }
 
 export async function signOutUser(): Promise<void> {
