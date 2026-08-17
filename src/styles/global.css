@@ -450,12 +450,15 @@ a {
   display: grid;
   place-items: center;
   color: var(--fg-soft);
-  transition: background 0.12s, color 0.12s;
+  transition: background 0.12s, color 0.12s, transform 0.1s;
   flex: none;
 }
 .icon-btn:hover {
   background: var(--bg-sunken);
   color: var(--fg);
+}
+.icon-btn:active {
+  transform: scale(0.9);
 }
 .icon-btn.on {
   background: var(--brand-soft);
@@ -478,6 +481,9 @@ a {
 .btn:hover {
   background: var(--border);
   color: var(--fg);
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.96);
 }
 .btn-primary {
   background: var(--brand);
@@ -582,6 +588,9 @@ a {
   background: var(--brand-soft);
   color: var(--brand-strong);
   opacity: 1;
+}
+.block-ask:active {
+  transform: scale(0.9);
 }
 @media (max-width: 1100px) {
   .block-ask {
@@ -782,12 +791,15 @@ h4.b-h {
   font-weight: 600;
   color: #b8c0d8;
   background: rgba(255, 255, 255, 0.07);
-  transition: background 0.12s;
+  transition: background 0.12s, transform 0.1s;
   white-space: nowrap;
 }
 .code-act:hover {
   background: rgba(255, 255, 255, 0.16);
   color: #fff;
+}
+.code-act:active:not(:disabled) {
+  transform: scale(0.93);
 }
 .code-act.run {
   background: #2f7d5a;
@@ -2007,6 +2019,7 @@ hr.divider {
   transition: transform 0.18s;
 }
 .ai-fab:hover { transform: scale(1.07); }
+.ai-fab:active { transform: scale(0.95); }
 
 /* ============================================================
    סביבת הפיתוח (IDE)
@@ -3407,6 +3420,21 @@ hr.divider {
   }
   .lesson-cards { grid-template-columns: 1fr; }
   .lesson-card { padding: 14px 16px; }
+
+  /* ---------- מניעת זום אוטומטי של Safari ב-iOS: כל שדה טקסט שהמשתמש עשוי
+     לגעת בו במובייל (חיפוש בסיידבר, קלט לצ'אט ה-AI, מפתחות API בהגדרות)
+     חייב font-size בפועל ≥16px, אחרת iOS מגדיל את כל הדף בפוקוס על השדה
+     ולא מקטין אותו בחזרה בבלור — נראה כאילו "המסך התרחב" בזמן הקלדה.
+     קבוע ל-16px ולא ל-1rem כדי שזה יישאר תקף גם אם המשתמש הקטין את
+     גודל הגופן הכללי (--fs) בהגדרות התצוגה. ---------- */
+  .sidebar-search input,
+  .ai-input,
+  .field input[type='text'],
+  .field input[type='password'],
+  .field input[dir='ltr'],
+  .field select {
+    font-size: 16px;
+  }
 }
 
 @media print {

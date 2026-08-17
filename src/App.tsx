@@ -59,6 +59,23 @@ export default function App() {
 
   /* ---------- מצב ממשק ---------- */
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 980);
+
+  /* נקבע פעם אחת מ-innerWidth בטעינה, ולכן צריך גם להגיב לשינוי שמעביר בין
+     מובייל לדסקטופ (סיבוב מכשיר, שינוי גודל חלון) — אחרת מגירת מובייל/עמודת
+     דסקטופ נשארות "תקועות" במצב שהיה נכון רק בטעינה. משנה את המצב רק כשחוצים
+     את נקודת השבירה בפועל, לא בכל resize, כדי לא לדרוס פתיחה/סגירה ידנית
+     של המשתמש בתוך אותו טווח. */
+  useEffect(() => {
+    let wasMobile = window.innerWidth <= 980;
+    const onResize = () => {
+      const isMobile = window.innerWidth <= 980;
+      if (isMobile === wasMobile) return;
+      wasMobile = isMobile;
+      setSidebarOpen(!isMobile);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
   const [aiOpen, setAiOpen] = useState(false);
   const [aiFocus, setAiFocus] = useState<AiFocus | null>(null);
   const [aiPending, setAiPending] = useState<string | null>(null);
