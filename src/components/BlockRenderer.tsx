@@ -7,6 +7,7 @@ import Quiz from './Quiz';
 import Exercise from './Exercise';
 import { ISparkle } from './Icons';
 import type { Block, CalloutVariant } from '../types/content';
+import { sanitizeSvg } from '../lib/sanitize';
 
 const CALLOUT_META: Record<CalloutVariant, { icon: string; label: string }> = {
   info: { icon: 'ℹ', label: 'שים לב' },
@@ -294,12 +295,30 @@ function Inner({
       return (
         <div className="diagram">
           {b.title && <div className="diagram-title">{b.title}</div>}
-          <div dangerouslySetInnerHTML={{ __html: b.svg }} />
+          <div dangerouslySetInnerHTML={{ __html: sanitizeSvg(b.svg) }} />
           {b.caption && <div className="diagram-cap">{b.caption}</div>}
         </div>
       );
 
     case 'divider':
       return <hr className="divider" />;
+
+    /* בלוק מסוג לא מוכר (למשל תוכן שנוצר על ידי AI עם kind עתידי/שגוי) —
+       לא נזרקת שגיאה ולא "נעלם בשקט" (ה-switch הזה נשען על exhaustiveness
+       של TypeScript שלא קיימת בזמן ריצה על תוכן חיצוני). ראה AGENTS.md §13 0.2. */
+    default: {
+      const kind = (b as { kind?: unknown }).kind;
+      return (
+        <div className="callout c-warn">
+          <div className="callout-head">
+            <span className="callout-icon">⚠</span> בלוק לא נתמך
+          </div>
+          <div>
+            סוג התוכן{kind ? ` "${String(kind)}"` : ''} אינו מוכר לגרסה הזו של האפליקציה ולכן
+            לא הוצג.
+          </div>
+        </div>
+      );
+    }
   }
 }

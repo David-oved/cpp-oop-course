@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LESSONS, getLesson } from './content';
 import { flattenLesson } from './types/content';
 import { sectionToText } from './lib/sectionText';
@@ -20,6 +20,9 @@ import BlockRenderer from './components/BlockRenderer';
 import AiPanel, { type AiFocus } from './components/AiPanel';
 import Settings from './components/Settings';
 import Ide from './components/Ide';
+/* טעינה עצלה: pdfjs-dist + mammoth (מחלצי PDF/Word) שקולים כמה מאות KB ורלוונטיים רק
+   למי שפותח את הכלי הזה בפועל — אין סיבה שכל תלמיד יוריד אותם בטעינה הראשונה. */
+const LessonBuilder = lazy(() => import('./components/LessonBuilder'));
 import {
   IMenu, ISparkle, ISettings, ISun, IMoon, ICheck,
   IChevRight, IChevLeft, IHome, ITerminal, IReset, IWifiOff,
@@ -81,6 +84,8 @@ export default function App() {
   const [aiPending, setAiPending] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [ide, setIde] = useState<IdeRequest | null>(null);
+  /* בניית שיעור מ-PDF ("המערכת החכמה") — כלי מחבר/מרצה, ראה LessonBuilder.tsx */
+  const [builderOpen, setBuilderOpen] = useState(false);
   const [theme, setThemeState] = useState<Theme>(getTheme());
   const [completed, setCompleted] = useState<Set<string>>(getCompleted);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -193,7 +198,7 @@ export default function App() {
     const h = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
       if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable) return;
-      if (ide || settingsOpen) return;
+      if (ide || settingsOpen || builderOpen) return;
       // RTL: חץ שמאל = העמוד הבא
       if (e.key === 'ArrowLeft' && next) navigate(next.lessonId, next.section.id);
       if (e.key === 'ArrowRight' && prev) navigate(prev.lessonId, prev.section.id);
@@ -202,7 +207,7 @@ export default function App() {
     };
     window.addEventListener('keydown', h);
     return () => window.removeEventListener('keydown', h);
-  }, [next, prev, navigate, ide, settingsOpen]);
+  }, [next, prev, navigate, ide, settingsOpen, builderOpen]);
 
   /* ---------- הקשר לעוזר ה-AI ---------- */
   const aiCtx = useMemo(() => {
@@ -418,10 +423,24 @@ export default function App() {
       )}
 
       {settingsOpen && (
-        <Settings onClose={() => setSettingsOpen(false)} onChanged={() => forceUpdate((x) => x + 1)} />
+        <Settings
+          onClose={() => setSettingsOpen(false)}
+          onChanged={() => forceUpdate((x) => x + 1)}
+          onOpenBuilder={() => {
+            setSettingsOpen(false);
+            setBuilderOpen(true);
+          }}
+        />
       )}
 
       {ide && <Ide req={ide} onClose={() => setIde(null)} />}
+
+      {/* בניית שיעור מ-PDF ("המערכת החכמה") — כלי מחבר/מרצה, ראה LessonBuilder.tsx */}
+      {builderOpen && (
+        <Suspense fallback={<div className="modal-overlay"><span className="spinner" /></div>}>
+          <LessonBuilder onClose={() => setBuilderOpen(false)} />
+        </Suspense>
+      )}
 
       {toastMsg && <div className="toast">{toastMsg}</div>}
 

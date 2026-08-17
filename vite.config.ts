@@ -84,7 +84,8 @@ export default defineConfig({
       },
       workbox: {
         // כל תוכן השיעורים, הסגנון והסקריפטים — כדי שהאפליקציה תיפתח לגמרי בלי רשת.
-        globPatterns: ['**/*.{js,css,html,png,svg,ico,woff2}'],
+        // mjs נוסף בשביל ה-worker של pdfjs-dist (בניית שיעור מ-PDF, ראה lib/pdfExtract.ts).
+        globPatterns: ['**/*.{js,mjs,css,html,png,svg,ico,woff2}'],
         // ספריות ה-worker של Monaco גדולות — מעלים את התקרה כדי שגם הן ייכנסו למטמון.
         maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
         // version.json נבדק תמיד מהרשת ולעולם לא מוגש מהמטמון — הוא מנגנון בדיקת העדכון עצמו.
@@ -108,6 +109,7 @@ export default defineConfig({
           monaco: ['monaco-editor', '@monaco-editor/react'],
           anthropic: ['@anthropic-ai/sdk'],
           firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+          pdfjs: ['pdfjs-dist'],
         },
       },
     },

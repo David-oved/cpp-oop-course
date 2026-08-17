@@ -811,6 +811,10 @@ h4.b-h {
 .code-act:disabled {
   opacity: 0.5;
 }
+.code-act.on {
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+}
 /* עורך/הרצה — דסקטופ בלבד; "הצג קובץ מלא" — מובייל בלבד (ראו MOBILE_UX_SPEC.md) */
 .code-desktop-actions {
   display: inline-flex;
@@ -927,6 +931,15 @@ pre.code code {
   margin-top: 3px;
   color: #dbe1f0;
 }
+
+/* ---------- קלט (stdin) עריך בהרצה מהירה מתוך העמוד ---------- */
+.inline-stdin {
+  padding: 10px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+.inline-stdin .console-label { margin-bottom: 6px; }
+.inline-stdin .ide-stdin { min-height: 56px; }
 
 /* ---------- הודעת עטיפה אוטומטית ---------- */
 .wrap-notice {
@@ -3442,3 +3455,90 @@ hr.divider {
   .app { display: block; }
   .page { max-width: 100%; padding: 0; }
 }
+
+/* ============================================================
+   בניית שיעור מ-PDF ("המערכת החכמה") — LessonBuilder.tsx.
+   קטע חדש ועצמאי, לא נוגע בכללים הקיימים למעלה. ראה AGENTS.md §13 0.7–0.10.
+   ============================================================ */
+.builder-modal { width: min(760px, 100%); }
+.builder-body { display: flex; flex-direction: column; gap: 14px; }
+.builder-select {
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 0.92rem;
+}
+.builder-log {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  margin: 10px 0;
+  background: var(--bg);
+  font-size: 0.84rem;
+}
+.builder-log-row { color: var(--fg-soft); }
+.builder-log-row:last-child { color: var(--fg); font-weight: 600; }
+.builder-failed {
+  list-style: none;
+  margin: 10px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.builder-failed li {
+  border: 1px solid var(--err);
+  background: var(--err-soft);
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.builder-preview {
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin-top: 14px;
+  overflow: hidden;
+}
+.builder-preview-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-sunken);
+  border-bottom: 1px solid var(--line);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.builder-preview-blocks { padding: 16px; max-height: 50vh; overflow-y: auto; }
+.builder-drafts {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.builder-drafts li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+  font-size: 0.86rem;
+}
+.builder-drafts-actions { display: inline-flex; gap: 4px; flex: none; }

@@ -25,12 +25,12 @@ import {
   markCompleted,
   toggleCompleted,
   getQuizState,
-  saveQuizAnswer,
   getTheme,
   setTheme,
   getFontScale,
   setFontScale,
   setExerciseCode,
+  resetAllProgress,
   type QuizState,
   type SavedProject,
   type Snippet,
@@ -38,10 +38,11 @@ import {
 } from './storage';
 
 // מפתחות localStorage גולמיים — חייבים להישאר זהים בדיוק לאלה המוגדרים ב-storage.ts
-// (K_PROJECTS / K_SCRATCH / תחילית K_EX). הם לא מיוצאים משם (קבועים פרטיים), ובכוונה
+// (K_PROJECTS / K_SCRATCH / K_QUIZ / תחילית K_EX). הם לא מיוצאים משם (קבועים פרטיים), ובכוונה
 // לא נוגעים בקובץ storage.ts כדי לא להתנגש עם עריכה מקבילה עליו.
 const RAW_PROJECTS_KEY = 'cppcourse.projects';
 const RAW_SCRATCH_KEY = 'cppcourse.scratch';
+const RAW_QUIZ_KEY = 'cppcourse.quiz';
 const RAW_EX_PREFIX = 'cppcourse.exercises.';
 
 interface CloudDoc {
@@ -70,6 +71,24 @@ function writeRawArray(key: string, value: unknown[]) {
   } catch {
     /* מצב פרטי / אחסון מלא — מתעלמים בשקט, כמו ב-storage.ts */
   }
+}
+
+function writeRawValue(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* מצב פרטי / אחסון מלא — מתעלמים בשקט, כמו ב-storage.ts */
+  }
+}
+
+/** מוחק כל מפתח cppcourse.exercises.* שה-id שלו לא ברשימת ה-id-ים שצריך להשאיר. */
+function pruneExerciseCodes(keepIds: Set<string>) {
+  const toRemove: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(RAW_EX_PREFIX) && !keepIds.has(k.slice(RAW_EX_PREFIX.length))) toRemove.push(k);
+  }
+  toRemove.forEach((k) => localStorage.removeItem(k));
 }
 
 /** סורק את כל מפתחות cppcourse.exercises.* ב-localStorage. */
@@ -111,10 +130,9 @@ function applyCloudState(data: Partial<CloudDoc>) {
     for (const id of cloud) if (!local.has(id)) markCompleted(id);
     for (const id of local) if (!cloud.has(id)) toggleCompleted(id);
   }
-  if (data.quiz) {
-    for (const [id, v] of Object.entries(data.quiz)) saveQuizAnswer(id, v);
-  }
+  if (data.quiz) writeRawValue(RAW_QUIZ_KEY, data.quiz);
   if (data.exercises) {
+    pruneExerciseCodes(new Set(Object.keys(data.exercises)));
     for (const [id, code] of Object.entries(data.exercises)) setExerciseCode(id, code);
   }
   if (data.projects) writeRawArray(RAW_PROJECTS_KEY, data.projects);
@@ -199,7 +217,14 @@ export function initSync() {
   patchLocalStorage();
   onAuthChange((user) => {
     currentUid = user?.uid ?? null;
-    if (!user) return; // אורח (לא מחובר) — בלי סנכרון ענן בכלל, לפי ההחלטה בפרויקט
+    if (!user) {
+      // מתנתקים (או אף פעם לא התחברו): מנקים שאריות מהחשבון הקודם מה-localStorage.
+      // בלי זה, במכשיר משותף (למשל מחשב בכיתה) חשבון Google הבא שיתחבר היה "יורש" את
+      // ההתקדמות/תשובות/קוד של החשבון הקודם ואפילו דוחף אותם כמסמך ההתחלתי שלו בענן —
+      // כי isSignedIn() חוזר להיות true ברגע שמישהו אחר מתחבר, והמפתחות עוד קיימים פיזית.
+      resetAllProgress();
+      return; // אורח (לא מחובר) — בלי סנכרון ענן בכלל, לפי ההחלטה בפרויקט
+    }
     pullFromCloud(user.uid)
       .then((found) => {
         if (!found) return pushToCloud(user.uid); // משתמש חדש — יוצרים לו מסמך התחלתי
