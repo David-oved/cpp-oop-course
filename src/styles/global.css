@@ -3462,15 +3462,6 @@ hr.divider {
    ============================================================ */
 .builder-modal { width: min(760px, 100%); }
 .builder-body { display: flex; flex-direction: column; gap: 14px; }
-.builder-select {
-  width: 100%;
-  padding: 9px 10px;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--fg);
-  font-size: 0.92rem;
-}
 .builder-log {
   display: flex;
   flex-direction: column;
@@ -3542,3 +3533,37 @@ hr.divider {
   font-size: 0.86rem;
 }
 .builder-drafts-actions { display: inline-flex; gap: 4px; flex: none; }
+
+/* כניסות נוספות ל"בניית שיעור ממצגת" — סרגל צד ומסך הבית (בנוסף להגדרות) */
+.sidebar-add-lesson {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 12px 14px;
+  padding: 10px 12px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r);
+  background: transparent;
+  color: var(--brand);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+.sidebar-add-lesson:hover {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+.lesson-card-add {
+  border-style: dashed;
+  border-color: var(--border-strong);
+  color: var(--brand);
+  align-items: flex-start;
+  justify-content: center;
+}
+.lesson-card-add:hover {
+  border-style: dashed;
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+.lesson-card-add .lc-title { color: var(--brand); }

@@ -1,5 +1,7 @@
 import { LESSONS } from '../content';
 import { countSections } from '../types/content';
+import { useApp } from '../AppContext';
+import { ISparkle } from './Icons';
 
 export default function Home({
   completed,
@@ -8,6 +10,7 @@ export default function Home({
   completed: Set<string>;
   onOpen: (lessonId: string, sectionId: string) => void;
 }) {
+  const app = useApp();
   const readyLessons = LESSONS.filter((l) => l.ready);
   const totalSections = readyLessons.reduce((n, l) => n + countSections(l), 0);
   const totalSlides = LESSONS.reduce((n, l) => n + l.slideCount, 0);
@@ -106,6 +109,15 @@ export default function Home({
             </button>
           );
         })}
+
+        {/* בניית שיעור ממצגת ("המערכת החכמה") — ראה LessonBuilder.tsx */}
+        <button className="lesson-card lesson-card-add" onClick={() => app.openBuilder()}>
+          <div className="lc-top">
+            <ISparkle size={18} />
+            <span className="lc-title">בניית שיעור ממצגת</span>
+          </div>
+          <div className="lc-sub">מעלים PDF/Word, ה-AI בונה שיעור מלא</div>
+        </button>
       </div>
     </div>
   );

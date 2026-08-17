@@ -190,8 +190,9 @@ export default function App() {
   }, []);
 
   const openIde = useCallback((req: IdeRequest) => setIde(req), []);
+  const openBuilder = useCallback(() => setBuilderOpen(true), []);
 
-  const api = useMemo(() => ({ askAi, openIde, toast }), [askAi, openIde, toast]);
+  const api = useMemo(() => ({ askAi, openIde, openBuilder, toast }), [askAi, openIde, openBuilder, toast]);
 
   /* ---------- קיצורי מקלדת ---------- */
   useEffect(() => {

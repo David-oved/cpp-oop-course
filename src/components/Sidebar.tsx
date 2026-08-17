@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { LESSONS } from '../content';
 import { countSections } from '../types/content';
-import { ICheck, ISearch, IClose } from './Icons';
+import { useApp } from '../AppContext';
+import { ICheck, ISearch, IClose, ISparkle } from './Icons';
 
 export default function Sidebar({
   lessonId,
@@ -18,6 +19,7 @@ export default function Sidebar({
   onHome: () => void;
   onClose: () => void;
 }) {
+  const app = useApp();
   const [open, setOpen] = useState<Set<string>>(new Set(lessonId ? [lessonId] : ['l01']));
   const [q, setQ] = useState('');
 
@@ -167,6 +169,11 @@ export default function Sidebar({
             </div>
           );
         })}
+
+        {/* בניית שיעור ממצגת ("המערכת החכמה") — ראה LessonBuilder.tsx */}
+        <button className="sidebar-add-lesson" onClick={() => app.openBuilder()}>
+          <ISparkle size={15} /> בניית שיעור ממצגת
+        </button>
       </div>
     </nav>
   );

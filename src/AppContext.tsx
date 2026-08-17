@@ -21,12 +21,15 @@ export interface AppApi {
   askAi: (focus?: string, focusLabel?: string, question?: string) => void;
   /** פותח את סביבת הפיתוח עם קוד התחלתי */
   openIde: (req: IdeRequest) => void;
+  /** פותח את "בניית שיעור ממצגת" — ראה components/LessonBuilder.tsx */
+  openBuilder: () => void;
   toast: (msg: string) => void;
 }
 
 export const AppCtx = createContext<AppApi>({
   askAi: () => {},
   openIde: () => {},
+  openBuilder: () => {},
   toast: () => {},
 });
 

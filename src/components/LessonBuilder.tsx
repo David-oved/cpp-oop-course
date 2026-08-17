@@ -1,10 +1,12 @@
 /**
- * "בניית שיעור מ-PDF" — ה-UI ל"מערכת החכמה" (AGENTS.md §13 0.7–0.10, חלקי).
+ * "בניית שיעור ממצגת" — ה-UI ל"מערכת החכמה" (AGENTS.md §13 0.7–0.10, חלקי).
  *
- * כלי למחבר/מרצה (לא לתלמידים), זמין גם בדסקטופ וגם במובייל: מעלים PDF של מצגת קיימת,
- * האפליקציה מחלצת טקסט מכל שקף בדפדפן (lib/pdfExtract.ts), שולחת אותו בשני שלבים ל-AI
- * של המשתמש עצמו (lib/generate.ts — מניפסט ואז סעיף-סעיף), ומציגה תוצאה לביקורת.
- * **לא** משלבת אוטומטית ל-content/index.ts — זה נשאר צעד ידני מכוון (lib/exportLesson.ts).
+ * כלי למחבר/מרצה (לא לתלמידים), זמין גם בדסקטופ וגם במובייל: מעלים PDF/Word של מצגת
+ * כלשהי (כותרת/מספר שיעור מוקלדים ידנית — אין רשימה מוכרת-מראש של נושאים, ראה
+ * content/index.ts), האפליקציה מחלצת טקסט מכל עמוד בדפדפן (lib/presentationExtract.ts),
+ * שולחת אותו בשני שלבים ל-AI של המשתמש עצמו (lib/generate.ts — מניפסט ואז סעיף-סעיף),
+ * ומציגה תוצאה לביקורת. **לא** משלבת אוטומטית ל-content/index.ts — זה נשאר צעד ידני
+ * מכוון (lib/exportLesson.ts).
  *
  * טיוטות שנוצרות נשמרות אוטומטית (`saveDraftLesson`, lib/storage.ts — אותו מקום שסנכרון
  * הענן ב-lib/sync.ts קורא ממנו) כדי שאפשר יהיה לחזור אליהן או למחוק אותן מאוחר יותר.
@@ -21,26 +23,8 @@ import { buildExportBundle, downloadTextFile } from '../lib/exportLesson';
 import { getDraftLessons, saveDraftLesson, deleteDraftLesson, DRAFT_ID_PREFIX } from '../lib/storage';
 import { auth, onAuthChange, signIn, type User } from '../lib/firebase';
 import { flattenLesson, type Lesson } from '../types/content';
-import type { LessonMeta } from '../lib/generatePrompts';
 import BlockRenderer from './BlockRenderer';
 import { IClose, IDownload, IChevRight, IChevLeft, ISparkle, ITrash, IEye, IGoogle } from './Icons';
-
-/** מטא-דאטה של שיעורים 2–13 — זהה בכוונה למה שכבר קיים כ-stub ב-src/content/index.ts,
-    כדי שהמחבר לא יצטרך להקליד שוב את הכותרות/שמות הקבצים שכבר סוכמו שם. */
-const KNOWN_LESSONS: LessonMeta[] = [
-  { num: 2, title: 'בנאים', subtitle: 'constructors — איך אובייקט נולד עם ערכים תקינים', source: 'תכנות מתקדם 2 - אפרת עמר - בנאים.pdf' },
-  { num: 3, title: 'הורס, בנאי העתקה ומחלקה דינאמית', subtitle: 'ניהול זיכרון בתוך מחלקה: destructor, copy constructor, deep copy', source: 'תכנות מתקדם 3 - אפרת עמר - הורס בנאי העתקה ומחלקה דינאמית.pdf' },
-  { num: 4, title: 'חפיפת אופרטורים, הזזות ומחרוזות', subtitle: 'operator overloading, אופרטורי הזזה, ומחלקת String', source: 'תכנות מתקדם 4 - אפרת עמר - חפיפת אופרטורים הזזות ומחרוזות.pdf' },
-  { num: 5, title: 'פונקציה חברה, מחלקה חברה וקבצי טקסט', subtitle: 'friend, ועבודה עם ifstream / ofstream', source: 'תכנות מתקדם 5 - אפרת עמר - פונקציה חברה ומחלקה חברה קבצי טקסט.pdf' },
-  { num: 6, title: 'קבצים בינאריים', subtitle: 'קריאה וכתיבה של רשומות, גישה ישירה בקובץ', source: 'תכנות מתקדם 6 - אפרת עמר - קבצים בינאריים.pdf' },
-  { num: 7, title: 'סטטי וחריגות', subtitle: 'static members, ו-exception handling', source: 'תכנות מתקדם 7 - אפרת עמר - סטטי וחריגות.pdf' },
-  { num: 8, title: 'מחלקה מכילה ומוכלת ורשימה לינארית', subtitle: 'composition, ובניית רשימה מקושרת', source: 'תכנות מתקדם 8 - מחלקה מכילה ומוכלת ורשימה לינארית.pdf' },
-  { num: 9, title: 'ירושה ורשימה לינארית כפולה', subtitle: 'inheritance, וגרסה דו-כיוונית של הרשימה', source: 'תכנות מתקדם 9 - ירושה ורשימה לינארית כפולה.pdf' },
-  { num: 10, title: 'פולימורפיזם', subtitle: 'virtual, מחלקות אבסטרקטיות וטבלת הפונקציות הווירטואליות', source: 'תכנות מתקדם 10 - פולימורפיזם.pdf' },
-  { num: 11, title: 'תבניתיות ומיכלים', subtitle: 'templates ו-STL containers', source: 'תכנות מתקדם 11 - תבניתיות ומיכלים.pdf' },
-  { num: 12, title: 'אלגוריתמים ופונקציות אנונימיות', subtitle: 'אלגוריתמי STL ו-lambda expressions', source: 'תכנות מתקדם 12 - אלגוריתמים ופונקציות אנונימיות.pdf' },
-  { num: 13, title: 'רקורסיה ועצים', subtitle: 'רקורסיה, עצים בינאריים ועצי חיפוש', source: 'תכנות מתקדם 13 - רקורסיה ועצים.pdf' },
-];
 
 type Stage = 'setup' | 'extracting' | 'ready-to-generate' | 'generating' | 'done';
 
@@ -63,8 +47,13 @@ export default function LessonBuilder({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const [lessonNum, setLessonNum] = useState(2);
-  const meta = useMemo(() => KNOWN_LESSONS.find((l) => l.num === lessonNum)!, [lessonNum]);
+  /* מטא-דאטה של השיעור — מוקלדת ידנית, לא מרשימה קבועה מראש. האפליקציה היא מנוע כללי
+     (README, AGENTS.md §6): היא לא "מכירה" נושאים/מספרי שיעור עתידיים לפני שהם הועלו. */
+  const [num, setNum] = useState(2);
+  const [title, setTitle] = useState('');
+  const [subtitle, setSubtitle] = useState('');
+  const [source, setSource] = useState('');
+  const meta = useMemo(() => ({ num, title, subtitle, source }), [num, title, subtitle, source]);
 
   const [stage, setStage] = useState<Stage>('setup');
   const [pages, setPages] = useState<string[] | null>(null);
@@ -85,6 +74,7 @@ export default function LessonBuilder({ onClose }: { onClose: () => void }) {
     setStage('extracting');
     setPages(null);
     setExtractProgress(null);
+    setSource(file.name);
     try {
       const extracted = await extractPresentationText(file, (done, total) => setExtractProgress({ done, total }));
       setPages(extracted.pages);
@@ -96,7 +86,7 @@ export default function LessonBuilder({ onClose }: { onClose: () => void }) {
   };
 
   const startGenerate = async () => {
-    if (!pages) return;
+    if (!pages || !title.trim()) return;
     setError(null);
     setResult(null);
     setLog([]);
@@ -234,27 +224,41 @@ export default function LessonBuilder({ onClose }: { onClose: () => void }) {
           {stage === 'setup' && (
             <>
               <div className="field">
-                <label>איזה שיעור מייצרים?</label>
-                <select
-                  value={lessonNum}
-                  onChange={(e) => setLessonNum(Number(e.target.value))}
-                  className="builder-select"
-                >
-                  {KNOWN_LESSONS.map((l) => (
-                    <option key={l.num} value={l.num}>
-                      שיעור {l.num} — {l.title}
-                    </option>
-                  ))}
-                </select>
-                <div className="help">{meta.subtitle}</div>
+                <label>כותרת השיעור</label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="למשל: בנאים"
+                />
+              </div>
+
+              <div className="field">
+                <label>תת-כותרת (אופציונלי)</label>
+                <input
+                  type="text"
+                  value={subtitle}
+                  onChange={(e) => setSubtitle(e.target.value)}
+                  placeholder="למשל: constructors — איך אובייקט נולד עם ערכים תקינים"
+                />
+              </div>
+
+              <div className="field">
+                <label>מספר שיעור</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={num}
+                  onChange={(e) => setNum(Number(e.target.value) || 1)}
+                  style={{ width: 90 }}
+                  dir="ltr"
+                />
+                <div className="help">משפיע רק על סימון הטיוטה — לא נבדק מול שיעורים קיימים.</div>
               </div>
 
               <div className="field">
                 <label>קובץ המצגת (PDF או Word)</label>
-                <div className="help">
-                  הקובץ הצפוי: <code style={{ direction: 'ltr' }}>{meta.source}</code> — או קובץ
-                  Word (.docx) עם אותו תוכן.
-                </div>
+                <div className="help">כל מצגת/מסמך קורס — לא צריך להיות מנושא מסוים.</div>
                 <input
                   ref={fileRef}
                   type="file"
@@ -311,14 +315,17 @@ export default function LessonBuilder({ onClose }: { onClose: () => void }) {
             <div className="field">
               <div className="note-ok">חולצו {pages.length} שקפים מהקובץ.</div>
               {stage === 'ready-to-generate' && (
-                <div className="row-actions">
-                  <button className="btn btn-primary" onClick={startGenerate}>
-                    התחל ייצור
-                  </button>
-                  <button className="btn btn-ghost" onClick={() => fileRef.current?.click()}>
-                    בחר קובץ אחר
-                  </button>
-                </div>
+                <>
+                  {!title.trim() && <div className="note-warn">צריך למלא כותרת שיעור לפני שמתחילים.</div>}
+                  <div className="row-actions">
+                    <button className="btn btn-primary" onClick={startGenerate} disabled={!title.trim()}>
+                      התחל ייצור
+                    </button>
+                    <button className="btn btn-ghost" onClick={() => fileRef.current?.click()}>
+                      בחר קובץ אחר
+                    </button>
+                  </div>
+                </>
               )}
               {stage === 'generating' && (
                 <>
@@ -382,7 +389,18 @@ export default function LessonBuilder({ onClose }: { onClose: () => void }) {
                 >
                   <ITrash size={14} /> מחק טיוטה
                 </button>
-                <button className="btn btn-ghost" onClick={() => { setViewingDraftId(null); setStage('setup'); }}>
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => {
+                    setViewingDraftId(null);
+                    setResult(null);
+                    setPages(null);
+                    setTitle('');
+                    setSubtitle('');
+                    setSource('');
+                    setStage('setup');
+                  }}
+                >
                   שיעור נוסף
                 </button>
               </div>
