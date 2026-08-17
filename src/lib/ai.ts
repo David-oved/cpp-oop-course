@@ -109,30 +109,51 @@ export function askAI(
     // כשל שמצביע על מודל שהוצא משימוש — מאתרים מודל חדש ומנסים שוב פעם אחת
     const isStaleModel = (msg: string) =>
       /no longer available|not found|לא נמצא|does not exist|deprecated|model_not_found/i.test(msg);
+    // תקלה זמנית בצד השרת (502/503/504, "overloaded" וכו') — לא קשורה למודל שנבחר,
+    // סביר שתעבור לבד. מנסים שוב פעם אחת אחרי המתנה קצרה לפני שמציגים שגיאה למשתמש.
+    const isTransient = (msg: string) => /\b50[234]\b|תקלה זמנית בשרת|overloaded|UNAVAILABLE/i.test(msg);
 
-    let retried = false;
+    let retriedStale = false;
+    let retriedTransient = false;
     const guard: StreamHandlers = {
       onText: handlers.onText,
       onDone: handlers.onDone,
       onError: (msg) => {
-        if (retried || !isStaleModel(msg) || controller.signal.aborted) {
+        if (controller.signal.aborted) {
           handlers.onError(msg);
           return;
         }
-        retried = true;
-        setModelFor(provider.id, '');
-        void (async () => {
-          try {
-            const r = await resolveWorkingModel(provider, key, controller.signal);
-            setModelFor(provider.id, r.model);
+        if (!retriedStale && isStaleModel(msg)) {
+          retriedStale = true;
+          setModelFor(provider.id, '');
+          void (async () => {
+            try {
+              const r = await resolveWorkingModel(provider, key, controller.signal);
+              setModelFor(provider.id, r.model);
+              model = r.model;
+              await provider.stream(
+                { apiKey: key, model: r.model, system: SYSTEM, messages, signal: controller.signal },
+                guard
+              );
+            } catch (e) {
+              handlers.onError(e instanceof Error ? e.message : msg);
+            }
+          })();
+          return;
+        }
+        if (!retriedTransient && isTransient(msg)) {
+          retriedTransient = true;
+          void (async () => {
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+            if (controller.signal.aborted) return;
             await provider.stream(
-              { apiKey: key, model: r.model, system: SYSTEM, messages, signal: controller.signal },
-              handlers
+              { apiKey: key, model, system: SYSTEM, messages, signal: controller.signal },
+              guard
             );
-          } catch (e) {
-            handlers.onError(e instanceof Error ? e.message : msg);
-          }
-        })();
+          })();
+          return;
+        }
+        handlers.onError(msg);
       },
     };
 
