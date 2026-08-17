@@ -15,6 +15,7 @@ import { checkProvider } from '../lib/ai';
 import { PROVIDERS, looksLikeValidKey, type ProviderId } from '../lib/providers';
 import { renderInline } from '../lib/markdown';
 import { auth, onAuthChange, signIn, signOutUser, type User } from '../lib/firebase';
+import { pushToCloud } from '../lib/sync';
 import { checkVersion } from '../lib/pwa';
 import { IClose, ISettings, ICheck, IEye, IChevRight, IChevLeft, IUser, IGoogle, ISparkle, ISun, IReset } from './Icons';
 
@@ -26,9 +27,12 @@ type Screen = 'root' | 'account' | 'ai' | 'display' | 'system';
 export default function Settings({
   onClose,
   onChanged,
+  onOpenBuilder,
 }: {
   onClose: () => void;
   onChanged: () => void;
+  /** פותח את כלי "בניית שיעור מ-PDF" — ראה LessonBuilder.tsx */
+  onOpenBuilder: () => void;
 }) {
   const [screen, setScreen] = useState<Screen>('root');
 
@@ -481,15 +485,37 @@ export default function Settings({
                 </div>
                 <button
                   className="btn btn-sm btn-ghost btn-danger"
-                  onClick={() => {
-                    if (confirm('לאפס את כל ההתקדמות? אי אפשר לבטל.')) {
-                      resetAllProgress();
-                      onChanged();
-                      location.reload();
+                  onClick={async () => {
+                    if (!confirm('לאפס את כל ההתקדמות? אי אפשר לבטל.')) return;
+                    resetAllProgress();
+                    // מחובר עם Google: resetAllProgress עוקף את ה-setItem המתוזמן (הוא מוחק
+                    // דרך removeItem), אז בלי דחיפה מפורשת כאן ה-reload שמיד אחרי היה מושך
+                    // בחזרה מהענן את הנתונים הישנים ומבטל את האיפוס בפועל.
+                    if (user) {
+                      try {
+                        await pushToCloud(user.uid);
+                      } catch (err) {
+                        console.warn('דחיפת האיפוס לענן נכשלה:', err);
+                      }
                     }
+                    onChanged();
+                    location.reload();
                   }}
                 >
                   אפס הכול
+                </button>
+              </div>
+
+              {/* בניית שיעור מ-PDF ("המערכת החכמה") — כלי מחבר/מרצה, ראה LessonBuilder.tsx.
+                  זמין גם בדסקטופ וגם במובייל (שלא כמו ה-IDE). */}
+              <div className="field">
+                <label>בניית שיעור ממצגת (בטא)</label>
+                <div className="help">
+                  כלי למחבר/מרצה: מייצר טיוטת שיעור מלאה מתוך PDF של מצגת, בעזרת ה-AI שהגדרת
+                  למעלה.
+                </div>
+                <button className="btn btn-sm" onClick={onOpenBuilder}>
+                  פתח את כלי הבנייה
                 </button>
               </div>
             </>

@@ -84,7 +84,7 @@ export const geminiProvider: Provider = {
             role: m.role === 'assistant' ? 'model' : 'user',
             parts: [{ text: m.content }],
           })),
-          generationConfig: { maxOutputTokens: 4000 },
+          generationConfig: { maxOutputTokens: req.maxTokens ?? 4000 },
         }),
       });
 

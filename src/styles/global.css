@@ -450,12 +450,15 @@ a {
   display: grid;
   place-items: center;
   color: var(--fg-soft);
-  transition: background 0.12s, color 0.12s;
+  transition: background 0.12s, color 0.12s, transform 0.1s;
   flex: none;
 }
 .icon-btn:hover {
   background: var(--bg-sunken);
   color: var(--fg);
+}
+.icon-btn:active {
+  transform: scale(0.9);
 }
 .icon-btn.on {
   background: var(--brand-soft);
@@ -478,6 +481,9 @@ a {
 .btn:hover {
   background: var(--border);
   color: var(--fg);
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.96);
 }
 .btn-primary {
   background: var(--brand);
@@ -582,6 +588,9 @@ a {
   background: var(--brand-soft);
   color: var(--brand-strong);
   opacity: 1;
+}
+.block-ask:active {
+  transform: scale(0.9);
 }
 @media (max-width: 1100px) {
   .block-ask {
@@ -782,12 +791,15 @@ h4.b-h {
   font-weight: 600;
   color: #b8c0d8;
   background: rgba(255, 255, 255, 0.07);
-  transition: background 0.12s;
+  transition: background 0.12s, transform 0.1s;
   white-space: nowrap;
 }
 .code-act:hover {
   background: rgba(255, 255, 255, 0.16);
   color: #fff;
+}
+.code-act:active:not(:disabled) {
+  transform: scale(0.93);
 }
 .code-act.run {
   background: #2f7d5a;
@@ -798,6 +810,10 @@ h4.b-h {
 }
 .code-act:disabled {
   opacity: 0.5;
+}
+.code-act.on {
+  background: var(--brand-soft);
+  color: var(--brand-strong);
 }
 /* עורך/הרצה — דסקטופ בלבד; "הצג קובץ מלא" — מובייל בלבד (ראו MOBILE_UX_SPEC.md) */
 .code-desktop-actions {
@@ -915,6 +931,15 @@ pre.code code {
   margin-top: 3px;
   color: #dbe1f0;
 }
+
+/* ---------- קלט (stdin) עריך בהרצה מהירה מתוך העמוד ---------- */
+.inline-stdin {
+  padding: 10px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+.inline-stdin .console-label { margin-bottom: 6px; }
+.inline-stdin .ide-stdin { min-height: 56px; }
 
 /* ---------- הודעת עטיפה אוטומטית ---------- */
 .wrap-notice {
@@ -2007,6 +2032,7 @@ hr.divider {
   transition: transform 0.18s;
 }
 .ai-fab:hover { transform: scale(1.07); }
+.ai-fab:active { transform: scale(0.95); }
 
 /* ============================================================
    סביבת הפיתוח (IDE)
@@ -3407,6 +3433,21 @@ hr.divider {
   }
   .lesson-cards { grid-template-columns: 1fr; }
   .lesson-card { padding: 14px 16px; }
+
+  /* ---------- מניעת זום אוטומטי של Safari ב-iOS: כל שדה טקסט שהמשתמש עשוי
+     לגעת בו במובייל (חיפוש בסיידבר, קלט לצ'אט ה-AI, מפתחות API בהגדרות)
+     חייב font-size בפועל ≥16px, אחרת iOS מגדיל את כל הדף בפוקוס על השדה
+     ולא מקטין אותו בחזרה בבלור — נראה כאילו "המסך התרחב" בזמן הקלדה.
+     קבוע ל-16px ולא ל-1rem כדי שזה יישאר תקף גם אם המשתמש הקטין את
+     גודל הגופן הכללי (--fs) בהגדרות התצוגה. ---------- */
+  .sidebar-search input,
+  .ai-input,
+  .field input[type='text'],
+  .field input[type='password'],
+  .field input[dir='ltr'],
+  .field select {
+    font-size: 16px;
+  }
 }
 
 @media print {
@@ -3414,3 +3455,90 @@ hr.divider {
   .app { display: block; }
   .page { max-width: 100%; padding: 0; }
 }
+
+/* ============================================================
+   בניית שיעור מ-PDF ("המערכת החכמה") — LessonBuilder.tsx.
+   קטע חדש ועצמאי, לא נוגע בכללים הקיימים למעלה. ראה AGENTS.md §13 0.7–0.10.
+   ============================================================ */
+.builder-modal { width: min(760px, 100%); }
+.builder-body { display: flex; flex-direction: column; gap: 14px; }
+.builder-select {
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 0.92rem;
+}
+.builder-log {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  margin: 10px 0;
+  background: var(--bg);
+  font-size: 0.84rem;
+}
+.builder-log-row { color: var(--fg-soft); }
+.builder-log-row:last-child { color: var(--fg); font-weight: 600; }
+.builder-failed {
+  list-style: none;
+  margin: 10px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.builder-failed li {
+  border: 1px solid var(--err);
+  background: var(--err-soft);
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.builder-preview {
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin-top: 14px;
+  overflow: hidden;
+}
+.builder-preview-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-sunken);
+  border-bottom: 1px solid var(--line);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.builder-preview-blocks { padding: 16px; max-height: 50vh; overflow-y: auto; }
+.builder-drafts {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.builder-drafts li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+  font-size: 0.86rem;
+}
+.builder-drafts-actions { display: inline-flex; gap: 4px; flex: none; }

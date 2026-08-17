@@ -61,7 +61,7 @@ export const anthropicProvider: Provider = {
       const s = client(req.apiKey).messages.stream(
         {
           model: req.model,
-          max_tokens: 4000,
+          max_tokens: req.maxTokens ?? 4000,
           system: req.system,
           thinking: { type: 'adaptive' },
           output_config: { effort: 'medium' },

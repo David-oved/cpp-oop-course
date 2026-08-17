@@ -19,6 +19,8 @@ export interface ChatRequest {
   system: string;
   messages: ChatTurn[];
   signal: AbortSignal;
+  /** ברירת מחדל 4000 (מספיק לתשובת צ'אט). מוגדל ל-lib/generate.ts שמבקש JSON גדול. */
+  maxTokens?: number;
 }
 
 export interface ModelOption {

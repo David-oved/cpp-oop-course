@@ -80,6 +80,12 @@ export default function CodeBlock(p: CodeBlockProps) {
   const [result, setResult] = useState<CompileResult | null>(null);
   const [showSent, setShowSent] = useState(false);
   const [showFile, setShowFile] = useState(false);
+  /* קלט (stdin) שהתלמיד עצמו כותב לפני הרצה מהירה בעמוד — בלי זה כפתור "הרץ" רק
+     מפעיל את ה-stdin הקבוע שהמחבר הגדיר (אם בכלל) והתלמיד לא "מרגיש" תוכנית
+     אינטראקטיבית עם cin. סביבת הפיתוח המלאה כבר תומכת בזה; זה משלים את זה גם
+     בהרצה המהירה בתוך השיעור. */
+  const [stdinOpen, setStdinOpen] = useState(false);
+  const [stdin, setStdin] = useState(p.stdin ?? '');
 
   const files = p.files;
   const active = files ? files[Math.min(tab, files.length - 1)] : null;
@@ -109,7 +115,7 @@ export default function CodeBlock(p: CodeBlockProps) {
   const run = async () => {
     setRunning(true);
     setResult(null);
-    const r = await runProject(prepared.files as SourceFile[], { stdin: p.stdin });
+    const r = await runProject(prepared.files as SourceFile[], { stdin });
     setResult(r);
     setRunning(false);
   };
@@ -136,12 +142,21 @@ export default function CodeBlock(p: CodeBlockProps) {
                       app.openIde({
                         files: prepared.files,
                         title: p.title ?? 'קוד מהשיעור',
-                        stdin: p.stdin,
+                        stdin,
                       })
                     }
                   >
                     <ITerminal size={12} /> פתח בעורך
                   </button>
+                  {p.runnable && (
+                    <button
+                      className={`code-act${stdinOpen ? ' on' : ''}`}
+                      onClick={() => setStdinOpen((s) => !s)}
+                      title="כתבו קלט שהתוכנית תקרא עם cin לפני ההרצה"
+                    >
+                      <IEye size={12} /> קלט{stdin.trim() ? ' •' : ''}
+                    </button>
+                  )}
                   {p.runnable && (
                     <button className="code-act run" onClick={run} disabled={running}>
                       {running ? <span className="spinner" /> : <IPlay size={11} />}{' '}
@@ -184,6 +199,22 @@ export default function CodeBlock(p: CodeBlockProps) {
                 <span>{a.text}</span>
               </div>
             ))}
+          </div>
+        )}
+
+        {p.runnable && stdinOpen && (
+          <div className="inline-stdin">
+            <div className="console-label">
+              קלט לתוכנית — הטקסט כאן יוזן דרך <code style={{ direction: 'ltr' }}>cin</code> לפני
+              ההרצה
+            </div>
+            <textarea
+              className="ide-stdin"
+              value={stdin}
+              onChange={(e) => setStdin(e.target.value)}
+              placeholder={'למשל:\n5\n3'}
+              dir="ltr"
+            />
           </div>
         )}
 

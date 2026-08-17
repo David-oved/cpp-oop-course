@@ -2,6 +2,7 @@
 
 import type { ProviderId } from './providers/types';
 import { auth } from './firebase';
+import type { Lesson } from '../types/content';
 
 /**
  * רק משתמש מחובר (Google) שומר התקדמות — אורח מתחיל מאפס בכל כניסה, בכוונה: בלי זה
@@ -24,6 +25,7 @@ const K_LAST = 'cppcourse.lastSection';
 const K_FONT = 'cppcourse.fontScale';
 const K_ENTRY = 'cppcourse.entryChoice';
 const K_INSTALL_DISMISS = 'cppcourse.installDismissedAt';
+const K_DRAFT_LESSONS = 'cppcourse.draftLessons';
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -81,6 +83,28 @@ export const setEntryChoice = (v: EntryChoice) => write(K_ENTRY, v);
 /* ---- מתי נדחה לאחרונה באנר "התקינו את האפליקציה" (הגדרת מכשיר, לא מסונכרן) ---- */
 export const getInstallDismissedAt = () => read<number>(K_INSTALL_DISMISS, 0);
 export const setInstallDismissedAt = (v: number) => write(K_INSTALL_DISMISS, v);
+
+/* ---- טיוטות שיעורים שנוצרו על ידי המערכת החכמה (בדיקה בלבד, לא מפורסם) ----
+   נשמר תמיד ברמת המכשיר (לא תלוי התחברות) — זו עבודת יצירת תוכן, לא התקדמות תלמיד.
+   id של טיוטה תמיד עם הקידומת draft: כדי שלא יתנגש עם id של שיעור built-in (AGENTS.md §13 0.5). */
+export const DRAFT_ID_PREFIX = 'draft:';
+
+export const getDraftLessons = () => read<Lesson[]>(K_DRAFT_LESSONS, []);
+
+export function saveDraftLesson(lesson: Lesson): Lesson[] {
+  const id = lesson.id.startsWith(DRAFT_ID_PREFIX) ? lesson.id : `${DRAFT_ID_PREFIX}${lesson.id}`;
+  const withId = { ...lesson, id };
+  const list = getDraftLessons().filter((l) => l.id !== id);
+  list.unshift(withId);
+  write(K_DRAFT_LESSONS, list);
+  return list;
+}
+
+export function deleteDraftLesson(id: string): Lesson[] {
+  const list = getDraftLessons().filter((l) => l.id !== id);
+  write(K_DRAFT_LESSONS, list);
+  return list;
+}
 
 /* ---- פרויקטים שמורים בעורך ---- */
 export interface SavedProject {
@@ -193,7 +217,8 @@ export function resetAllProgress() {
       k !== K_THEME &&
       k !== K_APP_VERSION &&
       k !== K_ENTRY &&
-      k !== K_INSTALL_DISMISS
+      k !== K_INSTALL_DISMISS &&
+      k !== K_DRAFT_LESSONS
     )
       keys.push(k);
   }

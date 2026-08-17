@@ -63,7 +63,7 @@ export const openaiProvider: Provider = {
         body: JSON.stringify({
           model: req.model,
           stream: true,
-          max_completion_tokens: 4000,
+          max_completion_tokens: req.maxTokens ?? 4000,
           messages: [
             { role: 'system', content: req.system },
             ...req.messages.map((m) => ({ role: m.role, content: m.content })),

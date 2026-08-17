@@ -76,6 +76,9 @@ export function blockToText(b: Block): string {
       return `[דיאגרמה${b.title ? ' — ' + b.title : ''}]${b.caption ? ' ' + b.caption : ''}`;
     case 'divider':
       return '';
+    default:
+      // בלוק לא מוכר (תוכן שנוצר בזמן ריצה) — אין קריסה, פשוט לא תורם טקסט להקשר ה-AI.
+      return '';
   }
 }
 
